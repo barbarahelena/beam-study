@@ -65,17 +65,18 @@ demographics <- df %>% select(ID, Sex, Age, AgeStrata, Smoking, PackYears,
                               AlcoholUse, AlcoholUnits, History_List,
                               eGFR, Date_eGFR, BPlowMed = Medication_BPlowering,
                               HT_years = History_Hypertension_Years,
-                              V1_DateTime, V2_DateTime, V3_DateTime, V4_DateTime, V5_datetime) # check
-homebp <- df %>% select(ID, contains("HomeBP")) # check
-diet <- df %>% select(ID, contains("Diet")) # check
-bp_measurement <- df %>% select(ID, contains("BP_Measurement")) # check
-bia <- df %>% select(ID, contains("BIA")) # check
-nexfin <- df %>% select(ID, contains("Nexfin")) # check
-abpm <- df %>% select(ID, contains("ABPM")) # check
-pbmc <- df %>% select(ID, contains("PBMC")) # check
+                              V1_DateTime, V2_DateTime, V3_DateTime, V4_DateTime, V5_datetime,
+                              Treatment_Group) 
+homebp <- df %>% select(ID, contains("HomeBP")) 
+diet <- df %>% select(ID, contains("Diet")) 
+bp_measurement <- df %>% select(ID, contains("BP_Measurement")) 
+bia <- df %>% select(ID, contains("BIA")) 
+nexfin <- df %>% select(ID, contains("Nexfin")) 
+abpm <- df %>% select(ID, contains("ABPM")) 
+pbmc <- df %>% select(ID, contains("PBMC")) 
 lab <- df %>% select(ID, contains("Lab_"),
                             contains("Leukodiff"),
-                            contains("UrineLab")) # check
+                            contains("UrineLab")) 
 samplestorage <- df %>% select(ID, contains("Cryovials"),
                                contains("Proc"),
                                contains("Feces"),
