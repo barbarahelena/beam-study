@@ -53,7 +53,7 @@ names(groups)
 
 # Merge with treatment allocation df and set NA values
 df <- right_join(df, groups, by = "ID") %>% 
-    naniar::replace_with_na_all(condition = ~(.x == -99 | .x == -96)) %>% 
+    naniar::replace_with_na_all(condition = ~(.x == -99 | .x == -96 | .x == -95)) %>% 
     mutate(across(where(is.character), ~ na_if(.,"")))
 Amelia::missmap(df)
 names(df)
@@ -257,18 +257,67 @@ str(abpm_total)
 #### Dietary data ####
 str(diet)
 diet <- diet %>% select(-(contains("File") | contains("Remarks"))) %>% 
-    rename_with(., ~str_replace_all(., "Saturated_fat", "SaturatedFat"))
+    rename_with(., ~str_replace_all(., "Saturated_fat", "SaturatedFat")) %>% 
+    filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713"))
 str(diet)
 diet_long <- diet %>% 
     pivot_longer(., cols = 2:ncol(diet), names_sep = "_",
                  names_to = c("visit", "drop1", "variable", "drop2", "day"),
                  values_to = "value") %>% 
-    select(-drop1, -drop2)
+    select(-drop1, -drop2) %>% 
+    pivot_wider(., id_cols = c("ID", "visit", "day"), names_from = "variable",
+                values_from = "value") %>% 
+    select(-Date) %>% 
+    mutate(visit = as.factor(visit))
 head(diet_long)
 
+print(diet_long[which(as.numeric(diet_long$Energy) < 1000),], n = 100)
 
+diet_summary <- diet_long %>% mutate(across(.cols = c(3:11), as.numeric)) %>% 
+    group_by(ID, visit) %>% 
+    summarise(
+        Energy = mean(Energy),
+        Fat = mean(Fat),
+        SaturatedFat = mean(SaturatedFat),
+        Proteins = mean(Proteins), 
+        Carbohydrates = mean(Carbohydrates),
+        Fibers = mean(Fibers),
+        Salt = mean(Salt),
+        Sodium = mean(Sodium)
+    )
+
+head(diet_summary)
 
 #### Nexfin ####
+str(nexfin)
+# correct wrong value (changed in castor, remove upon next export)
+nexfin$V2_Nexfin_MAP[which(nexfin$V2_Nexfin_MAP == "93.9262093.92620137137")] <-
+    "93.92620137"
 
+# select vars
+nexfin <- nexfin %>% select(-contains("Remark"), -contains("yesno"), -contains("File"),
+                            -contains('hand'), -contains("reason")) %>% 
+    mutate(V2_Nexfin_MAP = as.numeric(V2_Nexfin_MAP)) %>% 
+    rename_with(., ~ str_remove(.x, "_Nexfin")) %>% 
+    rename_with(., ~ str_replace(.x, "N_physiocals", "physiocal"))
+names(nexfin)
+
+nexfin_long <- nexfin %>% pivot_longer(., cols = c(2:ncol(nexfin)), 
+                                       names_to = c("visit", "variable"),
+                                       names_sep = "_",
+                                       values_to = "value") %>% 
+                    pivot_wider(., id_cols = c(1,2), names_from = "variable",
+                                values_from = "value")
+
+head(nexfin_long)
 
 #### Office BP ####
+
+
+
+#### PBMC ####
+
+
+
+#### Lab ###
+
