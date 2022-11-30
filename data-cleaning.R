@@ -66,7 +66,7 @@ demographics <- df %>% select(ID, Sex, Age, AgeStrata, Smoking, PackYears,
                               eGFR, Date_eGFR, BPlowMed = Medication_BPlowering,
                               HT_years = History_Hypertension_Years,
                               V1_DateTime, V2_DateTime, V3_DateTime, V4_DateTime, V5_datetime,
-                              Treatment_Group) 
+                              Treatment_group) 
 homebp <- df %>% select(ID, contains("HomeBP")) 
 diet <- df %>% select(ID, contains("Diet")) 
 bp_measurement <- df %>% select(ID, contains("BP_Measurement")) 
@@ -96,7 +96,7 @@ demographics <- demographics %>%
     AlcoholUse = case_when(
         AlcoholUse == 1 ~ paste0("Yes"),
         AlcoholUse == 0 ~ paste0("No"))) %>% 
-    mutate(across(c("Sex", "Smoking", "BPlowMed", "AlcoholUse"), as.factor))
+    mutate(across(c("Sex", "Smoking", "BPlowMed", "AlcoholUse", "Treatment_group"), as.factor))
     
 
 str(demographics)
