@@ -67,7 +67,7 @@ demographics <- df %>% select(ID, Sex, Age, AgeStrata, Smoking, PackYears,
                               eGFR, Date_eGFR, BPlowMed = Medication_BPlowering,
                               HT_years = History_Hypertension_Years,
                               V1_DateTime, V2_DateTime, V3_DateTime, V4_DateTime, V5_datetime,
-                              Treatment_group) 
+                              Treatment_group, (contains("V1") & contains("BP"))) 
 homebp <- df %>% select(ID, contains("HomeBP")) 
 diet <- df %>% select(ID, contains("Diet")) 
 bp_measurement <- df %>% select(ID, contains("BP_Measurement")) 
@@ -89,7 +89,19 @@ intervention <- df %>% select(ID, contains("Capsules"))
 names(demographics)
 str(demographics)
 
+bp_screening <- demographics %>% select(ID, contains("BP_"), 
+                            -(contains("Arm") | contains("Remarks") | contains("_1_"))) %>% 
+    rename_with(., ~ str_remove(.x, "BP_Pressure_Measurement_")) %>% 
+    rename_with(., ~ str_remove(.x, "_mmHg_")) %>% 
+    rename_with(., ~ str_remove(.x, "_min_")) %>% 
+    pivot_longer(., cols = 2:ncol(.), names_to = c("visit", "measurement", "variable"),
+                 values_to = "value", names_sep = "_") %>% 
+    pivot_wider(., id_cols = 1:3, names_from = "variable", values_from = "value") %>% 
+    group_by(ID, visit) %>% 
+    summarise(across(c("Systolic", "Diastolic", "Pulse"), ~ mean(.x)))
+
 demographics <- demographics %>% 
+    select(-contains("BP_")) %>% 
     mutate(BPlowMed = case_when(
         BPlowMed == 1 ~ paste0("Yes"),
         BPlowMed == 0 ~ paste0("No")
@@ -97,7 +109,10 @@ demographics <- demographics %>%
     AlcoholUse = case_when(
         AlcoholUse == 1 ~ paste0("Yes"),
         AlcoholUse == 0 ~ paste0("No"))) %>% 
-    mutate(across(c("Sex", "Smoking", "BPlowMed", "AlcoholUse", "Treatment_group"), as.factor))
+    mutate(across(c("Sex", "Smoking", "BPlowMed", "AlcoholUse", "Treatment_group"), 
+                  as.factor)) %>% 
+    right_join(., bp_screening %>% select(-visit), by = "ID") %>%
+    rename(V1_Systolic = Systolic, V1_Diastolic = Diastolic, V1_Pulse = Pulse)
     
 
 str(demographics)
