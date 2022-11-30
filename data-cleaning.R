@@ -334,11 +334,54 @@ officebp_long <- pivot_longer(officebp, cols = 2:ncol(officebp),
                               names_to = c("visit", "measurement", "variable"),
                               names_sep = "_",
                               values_to = "value") %>% 
-    pivot_wider(., id_cols = 1:2, names_from = "variable", values_from = "value")
+    pivot_wider(., id_cols = 1:3, names_from = "variable", values_from = "value")
+head(officebp_long)
+
+officebp_summary <- officebp_long %>% group_by(ID, visit) %>% 
+    summarise(across(c("Systolic", "Diastolic", "Pulse"), mean))
 
 #### PBMC ####
+str(pbmc)
+pbmc %>% select(contains("Reason"))
+pbmc_sel <- pbmc %>% select(ID, contains("Cellcount"), contains("Cryovials")) %>% 
+    filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713"))
+pbmc_sel
 
+pbmc_long <- pivot_longer(pbmc_sel, cols = 2:ncol(pbmc_sel), names_sep = "_",
+                          names_to = c("visit", "drop", "variable"), values_to = "value") %>% 
+            select(-drop) %>% 
+            pivot_wider(., id_cols = 1:2, names_from = "variable", values_from = "value") %>% 
+            select(-Cryovials) %>% 
+            mutate(Residual_count = Cellcount -3)
+head(pbmc_long)
 
+nrow(pbmc_long[which(pbmc_long$Residual_count < 15),]) / nrow(pbmc_long)
+
+gghistogram(pbmc_long$Residual_count, bins = 15, fill = pal_jama()(1)) + theme_Publication() +
+    xlab("Cell count vial #4") +
+    ggtitle("PBMC cell count vial 4") +
+    geom_vline(xintercept = 15, color = pal_jama()(2)[2], size = 1.0) +
+    scale_x_continuous(n.breaks = 6)
+ggsave("results/pbmc/cellcountvial4.pdf", width = 5, height = 5)
 
 #### Lab ###
+str(lab)
+print(lab %>% select(contains("Remarks")), n=24)
+lab_sel <- lab %>% select(ID, !contains("Remarks")) %>% 
+    filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713")) %>% 
+    rename_with(., ~ str_remove(.x, "Lab_")) %>% 
+    rename_with(., ~ str_remove(.x, "Leukodiff_"))
+
+names(lab_sel)
+
+lab_long <- lab_sel %>% 
+    pivot_longer(., cols = 2:ncol(.), names_to = c("visit", "variable"),
+                 names_sep = "_", values_to = "value") %>% 
+    pivot_wider(., id_cols = 1:2, names_from = "variable", values_from = "value")
+head(lab_long)    
+plot(lab_long[,3:11])
+plot(lab_long[,12:15])
+plot(lab_long[,16:18])
+plot(lab_long[,19:24])
+
 
