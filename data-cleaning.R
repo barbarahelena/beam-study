@@ -54,7 +54,8 @@ names(groups)
 
 # Merge with treatment allocation df and set NA values
 df <- right_join(df, groups, by = "ID") %>% 
-    naniar::replace_with_na_all(condition = ~(.x == -99 | .x == -96 | .x == -95)) %>% 
+    naniar::replace_with_na_all(condition = ~(.x == -99 | .x == -96 | .x == -95 |
+                                                  .x == -98)) %>% 
     mutate(across(where(is.character), ~ na_if(.,"")))
 Amelia::missmap(df)
 names(df)
@@ -107,6 +108,9 @@ any(demographics$AlcoholUse == "Yes" & demographics$AlcoholUnits == 0)
 any(demographics$AlcoholUse == "No" & demographics$AlcoholUnits != 0)
 any(demographics$BPlowMed == "Yes" & is.na(demographics$HT_years))
 
+saveRDS(demographics, "data/demographics_BEAM.RDS")
+write.csv2(demographics, "data/demographics_BEAM.csv")
+
 #### Home BP clean and check ####
 names(homebp)
 Amelia::missmap(homebp)
@@ -140,16 +144,13 @@ homebp_long <- pivot_longer(homebp_nodates, cols = 2:ncol(homebp_nodates),
                             names_to = c("visit", "week", "measurement", "timing", "item"),
                             names_sep = "_",
                             values_to = "value")
-names(homebp_long)
-head(homebp_long)
-head(homebp_long_min)
+
 homebp_long <- bind_rows(homebp_long, homebp_long_min)
-head(homebp_long)
 homebp_wider <- pivot_wider(homebp_long, id_cols = c(1:5), values_from = value,
                             names_from = item)
 head(homebp_wider)
 
-head(homebp_dates)
+names(homebp_dates)
 homebp_long_dates <- homebp_dates %>% 
     rename_with(., ~ str_remove_all(.x, "_Date")) %>% 
     pivot_longer(homebp_dates, cols = 2:ncol(homebp_dates),
@@ -188,6 +189,9 @@ homebp_total_pertime <- right_join(homebp_summary_pertime, homebp_long_dates,
                         arrange(ID, date)
 head(homebp_total_pertime)
 
+saveRDS(homebp_total_pertime, "data/homebp_pertime_BEAM.RDS")
+write.csv2(homebp_total_pertime, "data/homebp_pertime_BEAM.csv")
+
 homebp_total_perweek <- right_join(homebp_summary_perday, 
                                    homebp_long_dates_morning, 
                                    by = c("ID", "week")) %>% 
@@ -199,6 +203,9 @@ homebp_total_perweek <- right_join(homebp_summary_perday,
                                week = as.numeric(week)) %>% 
                         arrange(ID, date) 
 head(homebp_total_perweek)
+
+saveRDS(homebp_total_perweek, "data/homebp_perweek_BEAM.RDS")
+write.csv2(homebp_total_perweek, "data/homebp_perweek_BEAM.csv")
 
 #### ABPM clean and check ####
 names(abpm)
@@ -257,6 +264,12 @@ abpm_total <- right_join(abpm_longvars, abpm_shortvars, by = c("ID", "visit")) %
                    across(c("Bedtime", "WakeUpTime"), ~lubridate::hm(.x))) %>% 
                 droplevels(.)
 str(abpm_total)
+plot(abpm_total %>% select(contains("systolic")))
+plot(abpm_total %>% select(contains("diastolic")))
+plot(abpm_total %>% select(contains("HR")))
+
+saveRDS(abpm_total, "data/abpm_total.RDS")
+write.csv2(abpm_total, "data/abpm_total.csv")
 
 #### Dietary data ####
 str(diet)
@@ -275,22 +288,21 @@ diet_long <- diet %>%
     mutate(visit = as.factor(visit))
 head(diet_long)
 
+# found typo in data; corrected in Castor, so remove upon next export
+diet_long$Salt[which(diet_long$Salt == 1104)] <- 11.04
+
 print(diet_long[which(as.numeric(diet_long$Energy) < 1000),], n = 100)
 
 diet_summary <- diet_long %>% mutate(across(.cols = c(3:11), as.numeric)) %>% 
     group_by(ID, visit) %>% 
-    summarise(
-        Energy = mean(Energy),
-        Fat = mean(Fat),
-        SaturatedFat = mean(SaturatedFat),
-        Proteins = mean(Proteins), 
-        Carbohydrates = mean(Carbohydrates),
-        Fibers = mean(Fibers),
-        Salt = mean(Salt),
-        Sodium = mean(Sodium)
-    )
+    summarise(across(where(is.numeric), mean, na.rm = TRUE)) %>% 
+    select(-day)
 
 head(diet_summary)
+plot(diet_summary[,3:ncol(diet_summary)])
+
+saveRDS(diet_summary, "data/diet_summary.RDS")
+write.csv2(diet_summary, "data/diet_summary.csv")
 
 #### Nexfin ####
 str(nexfin)
@@ -313,7 +325,18 @@ nexfin_long <- nexfin %>% pivot_longer(., cols = c(2:ncol(nexfin)),
                     pivot_wider(., id_cols = c(1,2), names_from = "variable",
                                 values_from = "value")
 
+# two outliers below have been corrected in Castor; remove upon next export
+nexfin_long$nLargestStableBeats[which(nexfin_long$nLargestStableBeats == 503)] <- 70
+nexfin_long$SVR[which(nexfin_long$SVR == 13)] <- 1359.5487804878
+
+nexfin_long$ID[which(nexfin_long$nLargestStableBeats < 30)]
 head(nexfin_long)
+dim(nexfin_long)
+plot(nexfin_long[,3:15])
+plot(nexfin_long[,16:30])
+
+saveRDS(nexfin_long, "data/nexfin_data.RDS")
+write.csv2(nexfin_long, "data/nexfin_data.csv")
 
 #### Office BP ####
 names(bp_measurement)
@@ -343,6 +366,10 @@ head(officebp_long)
 
 officebp_summary <- officebp_long %>% group_by(ID, visit) %>% 
     summarise(across(c("Systolic", "Diastolic", "Pulse"), mean))
+plot(officebp_summary[,3:ncol(officebp_summary)])
+
+saveRDS(officebp_summary, "data/officebp_summary.RDS")
+write.csv2(officebp_summary, "data/officebp_summary.csv")
 
 #### PBMC ####
 str(pbmc)
@@ -368,6 +395,9 @@ gghistogram(pbmc_long$Residual_count, bins = 15, fill = pal_jama()(1)) + theme_P
     scale_x_continuous(n.breaks = 6)
 ggsave("results/pbmc/cellcountvial4.pdf", width = 5, height = 5)
 
+saveRDS(pbmc_long, "data/pbmc_storage.RDS")
+write.csv2(pbmc_long, "data/pbmc_storage.csv")
+
 #### Lab ####
 str(lab)
 print(lab %>% select(contains("Remarks")), n=24)
@@ -388,6 +418,9 @@ plot(lab_long[,12:15])
 plot(lab_long[,16:18])
 plot(lab_long[,19:24])
 
+saveRDS(lab_long, "data/lab_results.RDS")
+write.csv2(lab_long, "data/lab_results.csv")
+
 #### BIA ####
 str(bia)
 bia <- bia %>% select(ID, !contains("Remarks")) %>% 
@@ -401,6 +434,9 @@ bia_long <- bia %>% pivot_longer(., cols = 2:ncol(.), names_to = c("visit", "var
                     mutate(visit = as.factor(visit))
 str(bia_long)
 plot(bia_long[,3:13])
+
+saveRDS(bia_long, "data/bia_data.RDS")
+write.csv2(bia_long, "data/bia_data.csv")
 
 #### Sample storage ####
 str(samplestorage)
@@ -421,6 +457,8 @@ blood <- samplestorage %>% select(ID, contains("Blood") & !contains("SOP")) %>%
     pivot_wider(., id_cols = 1:2, names_from = "variable", values_from = "value")
 str(blood)
 
+write.csv2(blood, "data/bloodsamples.csv")
+
 # fecal samples; date pivoting separately
 feces_date <- samplestorage %>% select(ID, contains("Feces_DateTime")) %>% 
     pivot_longer(., cols = 2:ncol(.), names_to = c("visit", "drop", "variable"),
@@ -436,6 +474,8 @@ feces <- samplestorage %>% select(ID, contains("Feces"), -(contains("FecesCollec
     rename(Samples_stored = Storage)
 feces <- right_join(feces, feces_date, by = c("ID", "visit"))
 head(feces)
+
+write.csv2(feces, "data/fecessamples.csv")
 
 # urine samples; date pivoting separately
 print(samplestorage %>% select(ID, contains("Urine") & contains("SOP")), n = 21)
@@ -453,5 +493,18 @@ urine <- samplestorage %>% select(ID, contains("Urine") & !contains("DateTime") 
     select(-drop) %>% 
     pivot_wider(., id_cols = 1:2, names_from = "variable", values_from = "value")
 urine <- right_join(urine, urine_dates, by = c("ID", "visit"))
-head(urine)
+print(urine, n = 63)
 
+write.csv2(urine, "data/urinesamples.csv")
+
+#### Intervention ####
+str(intervention)
+print(intervention %>% select(ID, contains("Remarks")))
+intervention <- intervention %>% select(ID, !(contains("Checks") | contains("Remarks"))) %>% 
+    filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713")) %>% 
+    mutate(Total_NonCompliantDays = V3_Capsules_NonCompliantDays + V4_Capsules_NonCompliantDays)
+intervention$Total_NonCompliantDays
+names(intervention)
+
+saveRDS(intervention, "data/intervention.RDS")
+write.csv2(intervention, "data/intervention.csv")
