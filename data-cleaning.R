@@ -66,17 +66,18 @@ demographics <- df %>% select(ID, Sex, Age, AgeStrata, Smoking, PackYears,
                               V1_DateTime, V2_DateTime, V3_DateTime, V4_DateTime, V5_datetime) # check
 homebp <- df %>% select(ID, contains("HomeBP")) # check
 diet <- df %>% select(ID, contains("Diet")) # check
-bp_measurement <- df %>% select(ID, contains("BP_Measurement"))
+bp_measurement <- df %>% select(ID, contains("BP_Measurement")) # check
 bia <- df %>% select(ID, contains("BIA"))
-nexfin <- df %>% select(ID, contains("Nexfin"))
+nexfin <- df %>% select(ID, contains("Nexfin")) # check
 abpm <- df %>% select(ID, contains("ABPM")) # check
-pbmc <- df %>% select(ID, contains("PBMC"))
+pbmc <- df %>% select(ID, contains("PBMC")) # check
 lab <- df %>% select(ID, contains("Lab_"),
                             contains("Leukodiff"),
-                            contains("UrineLab"))
+                            contains("UrineLab")) # check
 samplestorage <- df %>% select(ID, contains("Cryovials"),
                                contains("Proc"),
-                               contains("Feces"))
+                               contains("Feces")) 
+intervention <- df %>% select(ID, contains("Capsules"))
 
 #### Demographics clean and check ####
 names(demographics)
@@ -364,7 +365,7 @@ gghistogram(pbmc_long$Residual_count, bins = 15, fill = pal_jama()(1)) + theme_P
     scale_x_continuous(n.breaks = 6)
 ggsave("results/pbmc/cellcountvial4.pdf", width = 5, height = 5)
 
-#### Lab ###
+#### Lab ####
 str(lab)
 print(lab %>% select(contains("Remarks")), n=24)
 lab_sel <- lab %>% select(ID, !contains("Remarks")) %>% 
@@ -384,4 +385,16 @@ plot(lab_long[,12:15])
 plot(lab_long[,16:18])
 plot(lab_long[,19:24])
 
+#### BIA ####
+str(bia)
+bia <- bia %>% select(ID, !contains("Remarks")) %>% 
+    filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713")) %>% 
+    rename_with(., ~ str_remove(.x, "_BIA"))
+str(bia)
 
+bia_long <- bia %>% pivot_longer(., cols = 2:ncol(.), names_to = c("visit", "variables"),
+                                 names_sep = "_", values_to = "value") %>% 
+                    pivot_wider(., id_cols = 1:2, names_from = "variables", values_from = "value") %>% 
+                    mutate(visit = as.factor(visit))
+str(bia_long)
+plot(bia_long[,3:13])
