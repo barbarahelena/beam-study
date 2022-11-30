@@ -53,6 +53,7 @@ names(df)
 names(groups)
 
 # Merge with treatment allocation df and set NA values
+groups <- groups %>%  mutate(Treatment_group = na_if(Treatment_group, "-"))
 df <- right_join(df, groups, by = "ID") %>% 
     naniar::replace_with_na_all(condition = ~(.x == -99 | .x == -96 | .x == -95 |
                                                   .x == -98)) %>% 
