@@ -512,6 +512,7 @@ urine <- samplestorage %>% select(ID, contains("Urine") & !contains("DateTime") 
 urine <- right_join(urine, urine_dates, by = c("ID", "visit"))
 print(urine, n = 63)
 
+saveRDS(urine, "data/urinesamples.RDS")
 write.csv2(urine, "data/urinesamples.csv")
 
 #### Intervention ####
