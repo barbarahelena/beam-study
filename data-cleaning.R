@@ -65,7 +65,7 @@ demographics <- df %>% select(ID, Sex, Age, AgeStrata, Smoking, PackYears,
                               HT_years = History_Hypertension_Years,
                               V1_DateTime, V2_DateTime, V3_DateTime, V4_DateTime, V5_datetime) # check
 homebp <- df %>% select(ID, contains("HomeBP")) # check
-diet <- df %>% select(ID, contains("Diet"))
+diet <- df %>% select(ID, contains("Diet")) # check
 bp_measurement <- df %>% select(ID, contains("BP_Measurement"))
 bia <- df %>% select(ID, contains("BIA"))
 nexfin <- df %>% select(ID, contains("Nexfin"))
@@ -174,15 +174,26 @@ head(homebp_long_dates_morning)
 
 homebp_total_pertime <- right_join(homebp_summary_pertime, homebp_long_dates, 
                            by = c("ID", "week", "timing")) %>% 
-                        mutate(date = lubridate::dmy(date)) %>% 
+                        mutate(date = lubridate::dmy(date),
+                               timing = as.factor(timing),
+                               week = case_when(
+                                   str_detect(week, "min") ~ str_replace(week, "min", "-"),
+                                   str_detect(week, "week") ~ str_replace(week, "week", "")
+                               ),
+                               week = as.numeric(week)) %>% 
                         arrange(ID, date)
 head(homebp_total_pertime)
 
 homebp_total_perweek <- right_join(homebp_summary_perday, 
                                    homebp_long_dates_morning, 
                                    by = c("ID", "week")) %>% 
-                        mutate(date = lubridate::dmy(date)) %>% 
-                        arrange(ID, date)
+                        mutate(date = lubridate::dmy(date),
+                               week = case_when(
+                                   str_detect(week, "min") ~ str_replace(week, "min", "-"),
+                                   str_detect(week, "week") ~ str_replace(week, "week", "")
+                               ),
+                               week = as.numeric(week)) %>% 
+                        arrange(ID, date) 
 head(homebp_total_perweek)
 
 #### ABPM clean and check ####
@@ -196,10 +207,7 @@ stripnames_abpm <- function(varname) {
 abpm <- abpm %>% select(ID, contains("TotalNo"), contains("SuccessNo"),
                         contains("Arm"), contains("Bedtime"), contains("WakeUpTime"),
                         contains("Measurements")) %>% 
-    filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713")) %>% 
-    mutate(across(contains("Measurements"), as.numeric),
-           across(contains("Arm"), as.factor)) %>% 
-    droplevels(.)
+    filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713"))
 str(abpm)
 abpm <- abpm %>% rename_with(., stripnames_abpm, contains("Measurements"))
 names(abpm)
@@ -217,3 +225,50 @@ abpm <- abpm %>% mutate(
 )
 
 str(abpm)
+
+# pivot longer in two parts - short and long variables
+abpm_longvars <- abpm %>% select(ID, contains("SD"), contains("Mean"))
+abpm_shortvars <- abpm %>% select(ID, contains("ABPM")) %>% mutate(across(everything(.), as.character))
+
+abpm_longvars <- pivot_longer(abpm_longvars, cols = 2:ncol(abpm_longvars),
+                                   names_to = c("visit", "timing", "statistic", "outcome"),
+                                   names_sep = "_",
+                                   values_to = "value") %>% 
+                        pivot_wider(., id_cols = 1:2,
+                                    values_from = value, names_from = c(timing, outcome, statistic),
+                                    names_sep = "_")
+head(abpm_longvars)
+abpm_shortvars <- pivot_longer(abpm_shortvars, cols = 2:ncol(abpm_shortvars),
+                                   names_to = c("visit", "abpm", "variable"),
+                                   names_sep = "_",
+                                   values_to = "value") %>% 
+                        select(-abpm) %>% 
+                        pivot_wider(., id_cols = 1:2, values_from = value,
+                                    names_from = variable)
+
+abpm_total <- right_join(abpm_longvars, abpm_shortvars, by = c("ID", "visit")) %>% 
+                mutate(across(contains("SD") | contains("Mean") | c("TotalNo", "SuccessNo"),
+                                         as.numeric),
+                   across(c("Arm", "visit"), as.factor),
+                   across(c("Bedtime", "WakeUpTime"), ~lubridate::hm(.x))) %>% 
+                droplevels(.)
+str(abpm_total)
+
+#### Dietary data ####
+str(diet)
+diet <- diet %>% select(-(contains("File") | contains("Remarks"))) %>% 
+    rename_with(., ~str_replace_all(., "Saturated_fat", "SaturatedFat"))
+str(diet)
+diet_long <- diet %>% 
+    pivot_longer(., cols = 2:ncol(diet), names_sep = "_",
+                 names_to = c("visit", "drop1", "variable", "drop2", "day"),
+                 values_to = "value") %>% 
+    select(-drop1, -drop2)
+head(diet_long)
+
+
+
+#### Nexfin ####
+
+
+#### Office BP ####
