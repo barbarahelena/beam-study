@@ -5,6 +5,7 @@
 library(tidyverse)
 library(ggpubr)
 library(ggsci)
+library(lubridate)
 
 # Functions
 theme_Publication <- function(base_size=12, base_family="sans") {
@@ -67,7 +68,7 @@ demographics <- df %>% select(ID, Sex, Age, AgeStrata, Smoking, PackYears,
 homebp <- df %>% select(ID, contains("HomeBP")) # check
 diet <- df %>% select(ID, contains("Diet")) # check
 bp_measurement <- df %>% select(ID, contains("BP_Measurement")) # check
-bia <- df %>% select(ID, contains("BIA"))
+bia <- df %>% select(ID, contains("BIA")) # check
 nexfin <- df %>% select(ID, contains("Nexfin")) # check
 abpm <- df %>% select(ID, contains("ABPM")) # check
 pbmc <- df %>% select(ID, contains("PBMC")) # check
@@ -76,7 +77,9 @@ lab <- df %>% select(ID, contains("Lab_"),
                             contains("UrineLab")) # check
 samplestorage <- df %>% select(ID, contains("Cryovials"),
                                contains("Proc"),
-                               contains("Feces")) 
+                               contains("Feces"),
+                               contains("Urine_"),
+                               contains("Blood")) 
 intervention <- df %>% select(ID, contains("Capsules"))
 
 #### Demographics clean and check ####
@@ -398,3 +401,57 @@ bia_long <- bia %>% pivot_longer(., cols = 2:ncol(.), names_to = c("visit", "var
                     mutate(visit = as.factor(visit))
 str(bia_long)
 plot(bia_long[,3:13])
+
+#### Sample storage ####
+str(samplestorage)
+names(samplestorage)
+sampleremarks <- samplestorage %>% select(ID, contains("Remarks"))
+samplestorage <- samplestorage %>% select(!(contains("PBMC") | contains("Check"))) %>% 
+    rename_with(., ~ str_remove(.x, "Cryovials_")) %>% 
+    rename_with(., ~ str_remove(.x, "_Number_of_cryovials")) %>% 
+    rename_with(., ~ str_replace(.x, "Lithium_heparin", "heparin")) %>% 
+    filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713"))
+
+# blood samples
+print(samplestorage %>% select(ID, contains("Blood") & contains("SOP")), n = 21)
+blood <- samplestorage %>% select(ID, contains("Blood") & !contains("SOP")) %>% 
+    pivot_longer(., cols = 2:ncol(.), names_to = c("visit", "drop", "variable"),
+                 names_sep = "_", values_to = c("value")) %>% 
+    select(-drop) %>% 
+    pivot_wider(., id_cols = 1:2, names_from = "variable", values_from = "value")
+str(blood)
+
+# fecal samples; date pivoting separately
+feces_date <- samplestorage %>% select(ID, contains("Feces_DateTime")) %>% 
+    pivot_longer(., cols = 2:ncol(.), names_to = c("visit", "drop", "variable"),
+                 names_sep = "_", values_to = c("value")) %>% 
+    select(-drop) %>% 
+    pivot_wider(., id_cols = 1:2, names_from = "variable", values_from = "value")
+feces <- samplestorage %>% select(ID, contains("Feces"), -(contains("FecesCollection")), 
+                                                         -(contains("Feces_DateTime"))) %>% 
+    pivot_longer(., cols = 2:ncol(.), names_to = c("visit", "drop", "variable"),
+                 names_sep = "_", values_to = c("value")) %>% 
+    select(-drop) %>% 
+    pivot_wider(., id_cols = 1:2, names_from = "variable", values_from = "value") %>% 
+    rename(Samples_stored = Storage)
+feces <- right_join(feces, feces_date, by = c("ID", "visit"))
+head(feces)
+
+# urine samples; date pivoting separately
+print(samplestorage %>% select(ID, contains("Urine") & contains("SOP")), n = 21)
+urine_dates <- samplestorage %>% select(ID, contains("Urine") & contains("DateTime")) %>% 
+    pivot_longer(., cols = 2:ncol(.), names_to = c("visit", "drop", "variable"),
+                 names_sep = "_", values_to = c("value")) %>% 
+    select(-drop) %>% 
+    pivot_wider(., id_cols = 1:2, names_from = "variable", values_from = "value") %>% 
+    mutate(across(contains("Date"), ~dmy_hm(.x))) %>% 
+    mutate(CollectionTime = EndDateTime - StartDateTime)
+urine <- samplestorage %>% select(ID, contains("Urine") & !contains("DateTime") &
+                                      !contains("SOP")) %>% 
+    pivot_longer(., cols = 2:ncol(.), names_to = c("visit", "drop", "variable"),
+                 names_sep = "_", values_to = c("value")) %>% 
+    select(-drop) %>% 
+    pivot_wider(., id_cols = 1:2, names_from = "variable", values_from = "value")
+urine <- right_join(urine, urine_dates, by = c("ID", "visit"))
+head(urine)
+
