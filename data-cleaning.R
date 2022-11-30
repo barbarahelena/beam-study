@@ -312,8 +312,29 @@ nexfin_long <- nexfin %>% pivot_longer(., cols = c(2:ncol(nexfin)),
 head(nexfin_long)
 
 #### Office BP ####
+names(bp_measurement)
+stripnames_officebp <- function(varname) {
+    varname <- str_remove(varname, "_min_")
+    varname <- str_remove(varname, "_mmHg_")
+    varname <- str_remove(varname, "OfficeBP_")
+    varname <- str_remove(varname, "Measurement_")
+    varname <- str_remove(varname, "BP_")
+    return(varname)
+}
 
+# Strip/change names for parts defined above; get rid of vars that we don't need
+officebp <- bp_measurement %>% rename_with(., stripnames_officebp) %>% 
+    select(-contains("_1_")) %>% 
+    mutate(across(contains("Pulse") | contains("Systolic") | contains("Diastolic"), as.numeric)) %>% 
+    filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713"))
+names(officebp)
+str(officebp)
 
+officebp_long <- pivot_longer(officebp, cols = 2:ncol(officebp), 
+                              names_to = c("visit", "measurement", "variable"),
+                              names_sep = "_",
+                              values_to = "value") %>% 
+    pivot_wider(., id_cols = 1:2, names_from = "variable", values_from = "value")
 
 #### PBMC ####
 
