@@ -35,5 +35,5 @@ table1 <- df_total %>%
            GFR, TC, HDL, LDL, TG, Treatment_group) %>% 
     CreateTableOne(data=., strata = 'Treatment_group', test = TRUE, addOverall = TRUE) %>% 
     print()
-
+write.csv2(table1, "results/table1.csv")
 
