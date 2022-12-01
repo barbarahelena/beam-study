@@ -45,6 +45,8 @@ theme_Publication <- function(base_size=12, base_family="sans") {
 # Data
 df <- rio::import("data/BEAM_export_20221124.csv")
 groups <- rio::import("data/treatment_groups.xlsx")
+fecalscfa <- rio::import("data/221201_Fecal_SCFA_tidy.xlsx") %>%
+    select(ID = Studienummer, visit = Visit, contains("DW"), contains("WW"))
 ## repeated measurements to be inserted here (AE and medication)
 
 # Change participant Id into ID
@@ -435,13 +437,14 @@ lab_long <- lab_sel %>%
                  names_sep = "_", values_to = "value") %>% 
     pivot_wider(., id_cols = 1:2, names_from = "variable", values_from = "value")
 head(lab_long)    
+lab_compl <- right_join(lab_long, fecalscfa, by = c("ID", "visit"))
 plot(lab_long[,3:11])
 plot(lab_long[,12:15])
 plot(lab_long[,16:18])
 plot(lab_long[,19:24])
 
-saveRDS(lab_long, "data/lab_results.RDS")
-write.csv2(lab_long, "data/lab_results.csv")
+saveRDS(lab_compl, "data/lab_results.RDS")
+write.csv2(lab_compl, "data/lab_results.csv")
 
 #### BIA ####
 str(bia)
