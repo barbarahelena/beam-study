@@ -148,6 +148,11 @@ homebp <- homebp %>% rename_with(., stripnames_homebp) %>%
 names(homebp)
 str(homebp)
 
+# Found typo in data; remove this upon next data export
+homebp$V3_week1_2_morning_DiastolicBP
+homebp$V3_week1_2_morning_DiastolicBP[which(homebp$V3_week1_2_morning_DiastolicBP == 960)] <- 96
+homebp$V3_week1_2_morning_DiastolicBP
+
 # min needs to pivot separately (has no timing); dates need to pivot separately
 homebp_dates <- homebp %>% select(ID, contains("Date"))
 homebp_nodates <- homebp %>% select(ID, !contains("Date"), -contains("min")) 
