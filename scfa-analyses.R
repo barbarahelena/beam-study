@@ -9,7 +9,6 @@ library(ggpubr)
 library(ggsci)
 
 # Functions
-# Functions
 theme_Publication <- function(base_size=12, base_family="sans") {
     library(grid)
     library(ggthemes)
@@ -77,15 +76,25 @@ linearmixed_scfa <- function(data, var){
     return(statres)
 }
 
-# Data
+save_function <- function(plot, name){
+    ggsave(plot = plot, 
+           filename = str_c("results/fecalscfa/", name, ".pdf"), width = 5, height = 4)
+    ggsave(plot = plot, 
+           filename = str_c("results/fecalscfa/", name, ".svg"), width = 5, height = 4)
+    ggsave(plot = plot, 
+           filename = str_c("results/fecalscfa/", name, ".png"), width = 5, height = 4)
+}
+
+#### Data ####
 df <- readRDS("data/demographics_BEAM.RDS")
 bia <- readRDS("data/bia_data.RDS") %>% select(ID, visit, BMI)
 lab <- readRDS("data/lab_results.RDS") %>% 
     select(ID, visit, GFR, LDL, CRP, UrineSodium, contains("DW"), contains("WW"))
 urinedata <- readRDS("data/urinesamples.RDS") %>% select(ID, visit, Volume)
 dietarydata <- readRDS("data/diet_summary.RDS") %>% select(ID, visit, Sodium, Fibers)
+covariates <- right_join(bia, dietarydata, by = c("ID", "visit"))
 
-# Dataset for SCFA analysis
+#### Dataset for SCFA analysis ####
 df_scfa <- right_join(df, lab, by = "ID") %>% 
     filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713")) %>% 
     mutate(Treatment_group = as.factor(Treatment_group),
@@ -105,6 +114,7 @@ df_means <- df_scfa %>%
     summarise(across(contains("DW") | contains("WW"), 
                      list(mean = mean, sd = sd), .names = "{.col}_{.fn}"))
 
+#### SCFA plots with LMMs ####
 dw_acetate_lm <- c()
 dw_acetate_lm <- df_scfa %>% linearmixed(DW_AA_umolg)
 
@@ -285,5 +295,66 @@ ww_fa_lm <- df_scfa %>% linearmixed(WW_FA_umolg)
 
 ggarrange(plot_acetate, plot_butyrate, plot_propionate, plot_fa, nrow = 2, ncol = 2)
 ggsave(filename = "results/fecalscfa/fecalscfa_dryweightcorr_all.pdf", width = 8, height = 7)
-ggsave(filename = "results/fecalscfa/", width = 7, height = 5)
-ggsave(plot = plot_acetate, filename = "results/fecalscfa/fecalacetate_dw.pdf", width = 5, height = 4)
+ggsave(filename = "results/fecalscfa/fecalscfa_dryweightcorr_all.svg", width = 8, height = 7)
+ggsave(filename = "results/fecalscfa/fecalscfa_dryweightcorr_all.png", width = 8, height = 7)
+
+ggarrange(plot_acetate_ww, plot_butyrate_ww, plot_propionate_ww, plot_fa_ww, nrow = 2, ncol = 2)
+ggsave(filename = "results/fecalscfa/fecalscfa_wetweightcorr_all.pdf", width = 8, height = 7)
+ggsave(filename = "results/fecalscfa/fecalscfa_wetweightcorr_all.svg", width = 8, height = 7)
+ggsave(filename = "results/fecalscfa/fecalscfa_wetweightcorr_all.png", width = 8, height = 7)
+
+save_function(plot_acetate, "acetate_dw")
+save_function(plot_butyrate, "butyrate_dw")
+save_function(plot_propionate, "propionate_dw")
+save_function(plot_acetate, "acetate_ww")
+save_function(plot_butyrate, "butyrate_ww")
+save_function(plot_propionate, "propionate_ww")
+
+#### LMMs with covariates ####
+df_scfa_compl <- right_join(covariates, df_scfa, by = c("ID", "visit"))
+names(df_scfa_compl)
+
+linearmixed_scfa_cov <- function(data, var){
+    data1 <- data %>% filter(weeks %in% c(0,4)) %>% 
+        mutate(var = {{ var }})
+    model1_v4 <- lmer(var ~ Treatment_group*weeks + (1|ID) + Fibers + BMI + V1_Systolic, 
+                      data = data1)
+    res_v4 <- summary(model1_v4)
+    print(res_v4)
+    pval <- format(round(res_v4$coefficients[7,5], 3), nsmall = 3)
+    pval <- as.numeric(pval)
+    statres_line1 <- cbind(group1 = 0, group2 = 4, pval)
+    
+    data2 <- data %>%
+        filter(weeks %in% c(4,5)) %>% 
+        mutate(var = {{ var }})
+    model1_v5 <- lmer(var ~ Treatment_group*weeks + (1|ID) + Fibers + BMI + V1_Systolic,
+                      data = data2)
+    res_v5 <- summary(model1_v5)
+    print(res_v5)
+    pval <- format(round(res_v5$coefficients[7,5], 3), nsmall = 3)
+    pval <- as.numeric(pval)
+    statres_line2 <- cbind(group1 = 4, group2 = 5, pval)
+    
+    statres <- rbind(statres_line1, statres_line2)
+    statres <- tibble::as_tibble(statres)
+    statres$p_signif <- case_when(
+        statres$pval < 0.05 ~paste0("*"),
+        statres$pval < 0.01 ~paste0("**"),
+        statres$pval < 0.001 ~paste0("***"),
+        statres$pval > 0.05 ~paste0("")
+    )
+    return(statres)
+}
+
+linearmixed_scfa_cov(df_scfa_compl, DW_AA_umolg)
+linearmixed_scfa_cov(df_scfa_compl, DW_BA_umolg)
+linearmixed_scfa_cov(df_scfa_compl, DW_PA_umolg)
+linearmixed_scfa_cov(df_scfa_compl, DW_FA_umolg)
+
+linearmixed_scfa_cov(df_scfa_compl, WW_AA_umolg)
+linearmixed_scfa_cov(df_scfa_compl, WW_BA_umolg)
+linearmixed_scfa_cov(df_scfa_compl, WW_PA_umolg)
+linearmixed_scfa_cov(df_scfa_compl, WW_FA_umolg)
+
+
