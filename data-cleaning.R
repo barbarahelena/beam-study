@@ -67,7 +67,7 @@ names(df)
 demographics <- df %>% select(ID, Sex, Age, AgeStrata, Smoking, PackYears,
                               AlcoholUse, AlcoholUnits, History_List,
                               eGFR, Date_eGFR, BPlowMed = Medication_BPlowering,
-                              HT_years = History_Hypertension_Years,
+                              HT_years = History_Hypertension_Years, V1_Weight, V1_Height,
                               V1_DateTime, V2_DateTime, V3_DateTime, V4_DateTime, V5_datetime,
                               Treatment_group, (contains("V1") & contains("BP"))) 
 homebp <- df %>% select(ID, contains("HomeBP")) 
@@ -534,3 +534,4 @@ names(intervention)
 
 saveRDS(intervention, "data/intervention.RDS")
 write.csv2(intervention, "data/intervention.csv")
+
