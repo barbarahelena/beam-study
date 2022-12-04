@@ -1,0 +1,236 @@
+# BIA analysis
+# Barbara Verhaar, b.j.verhaar@amsterdamumc.nl
+
+# Libraries
+library(tidyverse)
+library(lme4)
+library(afex)
+library(ggpubr)
+library(ggsci)
+
+# Functions
+theme_Publication <- function(base_size=12, base_family="sans") {
+    library(grid)
+    library(ggthemes)
+    (theme_foundation(base_size=base_size, base_family=base_family)
+        + theme(plot.title = element_text(face = "bold",
+                                          size = rel(1.0), hjust = 0.5),
+                #family = 'Helvetica'
+                text = element_text(),
+                panel.background = element_rect(colour = NA),
+                plot.background = element_rect(colour = NA),
+                panel.border = element_rect(colour = NA),
+                axis.title = element_text(face = "bold",size = rel(0.8)),
+                axis.title.y = element_text(angle=90,vjust =2),
+                axis.line.y = element_line(colour="black"),
+                axis.title.x = element_text(vjust = -0.2),
+                axis.text = element_text(), 
+                axis.line.x = element_line(colour="black"),
+                axis.ticks.x = element_line(),
+                axis.ticks.y = element_line(),
+                panel.grid.major = element_line(colour="#f0f0f0"),
+                panel.grid.minor = element_blank(),
+                legend.key = element_rect(colour = NA),
+                legend.position = "right",
+                # legend.direction = "horizontal",
+                legend.key.size= unit(0.2, "cm"),
+                legend.spacing  = unit(0, "cm"),
+                # legend.title = element_text(face="italic"),
+                plot.margin=unit(c(5,5,5,5),"mm"),
+                strip.background=element_rect(colour="#f0f0f0",fill="#f0f0f0"),
+                strip.text = element_text(face="bold"),
+                plot.caption = element_text(face = "italic", size=rel(0.6))
+        ))
+} 
+
+linearmixed_bia <- function(data, var){
+    data1 <- data %>% filter(weeks %in% c(0,4)) %>% 
+        mutate(var = {{ var }})
+    model1_v4 <- lmer(var ~ Treatment_group*weeks + (1|ID), 
+                      data = data1)
+    res_v4 <- summary(model1_v4)
+    print(res_v4)
+    pval <- format(round(res_v4$coefficients[4,5], 3), nsmall = 3)
+    pval <- as.numeric(pval)
+    statres_line1 <- cbind(group1 = 0, group2 = 4, pval)
+    
+    data2 <- data %>%
+        filter(weeks %in% c(4,5)) %>% 
+        mutate(var = {{ var }})
+    model1_v5 <- lmer(var ~ Treatment_group*weeks + (1|ID),
+                      data = data2)
+    res_v5 <- summary(model1_v5)
+    print(res_v5)
+    pval <- format(round(res_v5$coefficients[4,5], 3), nsmall = 3)
+    pval <- as.numeric(pval)
+    statres_line2 <- cbind(group1 = 4, group2 = 5, pval)
+    
+    statres <- rbind(statres_line1, statres_line2)
+    statres <- tibble::as_tibble(statres)
+    statres$p_signif <- case_when(
+        statres$pval < 0.05 ~paste0("*"),
+        statres$pval < 0.01 ~paste0("**"),
+        statres$pval < 0.001 ~paste0("***"),
+        statres$pval > 0.05 ~paste0("")
+    )
+    return(statres)
+}
+
+save_function <- function(plot, name){
+    ggsave(plot = plot, 
+           filename = str_c("results/bia/", name, ".pdf"), width = 5, height = 4)
+    ggsave(plot = plot, 
+           filename = str_c("results/bia/", name, ".svg"), width = 5, height = 4)
+    ggsave(plot = plot, 
+           filename = str_c("results/bia/", name, ".png"), width = 5, height = 4)
+}
+
+#### Data ####
+df <- readRDS("data/demographics_BEAM.RDS")
+bia <- readRDS("data/bia_data.RDS")
+# lab <- readRDS("data/lab_results.RDS") %>% 
+#     select(ID, visit, GFR, LDL, CRP, UrineSodium, contains("DW"), contains("WW"))
+urinedata <- readRDS("data/urinesamples.RDS") %>% select(ID, visit, Volume)
+# dietarydata <- readRDS("data/diet_summary.RDS") %>% select(ID, visit, Sodium, Fibers)
+covariates <- right_join(urinedata, df, by = "ID")
+
+#### Dataset for SCFA analysis ####
+df_bia <- right_join(bia, covariates, by = c("ID", "visit")) %>% 
+    filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713")) %>% 
+    mutate(Treatment_group = as.factor(Treatment_group),
+           visit = as.factor(visit), 
+           weeks = case_when(
+               visit == "V2" ~ paste0(0),
+               visit == "V4" ~ paste0(4),
+               visit == "V5" ~ paste0(5)
+           ),
+           weeks = as.numeric(weeks),
+           Weight = BMI * (V1_Height / 100)^2,
+           ECW = case_when(
+               Sex == "Male" ~ (4.8) + (0.225* (V1_Height/100)^2)/(Imp5),
+                Sex == "Female" ~ (1.7) + (0.2*(V1_Height/100)^2)/(Imp5)+(0.057*Weight)
+           ),
+           ICW = TBW - ECW,
+           ECWperc = ECW / TBW * 100,
+           ICWperc = ICW / TBW * 100) %>% 
+    droplevels(.) 
+
+df_means <- df_bia %>% 
+    group_by(Treatment_group, weeks) %>% 
+    summarise(across(c("Fatmass", "Fatperc", "Leanmass", "Leanperc", "DryLean",
+                       "TBW", "TBWperc", "BMR", "BMI", "BFMI", "FFMI", "ECW", "ICW",
+                       "ECWperc", "ICWperc"), 
+                     list(mean = ~mean(.x, na.rm = TRUE),
+                          sd = ~sd(.x, na.rm = TRUE),
+                          n = ~length(.x)
+                     ), .names = "{.col}_{.fn}"))
+
+#### BIA plots with LMMs ####
+bmi_lm <- df_bia %>% linearmixed_bia(BMI)
+ffmi_lm <- df_bia %>% linearmixed_bia(FFMI)
+fm_lm <- df_bia %>% linearmixed_bia(Fatmass)
+fatp_lm <- df_bia %>% linearmixed_bia(Fatperc)
+leanp_lm <- df_bia %>% linearmixed_bia(Leanperc)
+drylean_lm <- df_bia %>% linearmixed_bia(DryLean)
+tbw_lm <- df_bia %>% linearmixed_bia(TBW)
+tbwperc_lm <- df_bia %>% linearmixed_bia(TBWperc)
+ecw_lm <- df_bia %>% linearmixed_bia(ECW)
+icw_lm <- df_bia %>% linearmixed_bia(ICW)
+ecwp_lm <- df_bia %>% linearmixed_bia(ECWperc)
+icwp_lm <- df_bia %>% linearmixed_bia(ICWperc)
+
+(plot_bmi <- ggplot() +
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 18, ymax = 30),
+                  fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_means, aes(x = weeks, y = BMI_mean, 
+                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
+        geom_line(data = df_bia, aes(x = weeks, y = BMI,
+                                      color = Treatment_group, group = ID), alpha = 0.2) +
+        geom_errorbar(data = df_means,
+                      aes(ymin = BMI_mean - (BMI_sd/sqrt(BMI_n)),
+                          ymax = BMI_mean + (BMI_sd/sqrt(BMI_n)),
+                          x = weeks,
+                          color = Treatment_group), width=0.1) +
+        stat_pvalue_manual(bmi_lm, y.position = 300, label = "p_signif", 
+                           remove.bracket = TRUE, bracket.size = 0) +
+        scale_color_jama(guide = "none") + 
+        scale_y_continuous(limits = c(18,30), breaks = seq(from = 18, to = 30, by = 2)) +
+        theme_Publication() +
+        labs(x = "Weeks", y = "BMI (kg/m2)", title = "BMI"))
+
+(plot_ffmi <- ggplot() +
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 12, ymax = 22),
+                  fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_means, aes(x = weeks, y = FFMI_mean, 
+                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
+        geom_line(data = df_bia, aes(x = weeks, y = FFMI,
+                                     color = Treatment_group, group = ID), alpha = 0.2) +
+        geom_errorbar(data = df_means,
+                      aes(ymin = FFMI_mean - (FFMI_sd/sqrt(BMI_n)),
+                          ymax = FFMI_mean + (FFMI_sd/sqrt(BMI_n)),
+                          x = weeks,
+                          color = Treatment_group), width=0.1) +
+        stat_pvalue_manual(dw_acetate_lm, y.position = 300, label = "p_signif", 
+                           remove.bracket = TRUE, bracket.size = 0) +
+        scale_color_jama(guide = "none") + 
+        scale_y_continuous(limits = c(12,22), breaks = seq(from = 12, to = 22, by = 2)) +
+        theme_Publication() +
+        labs(x = "Weeks", y = "FFMI (kg/m2)", title = "FFMI"))
+
+(plot_leanp <- ggplot() +
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 55, ymax = 90),
+                  fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_means, aes(x = weeks, y = Leanperc_mean, 
+                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
+        geom_line(data = df_bia, aes(x = weeks, y = Leanperc,
+                                     color = Treatment_group, group = ID), alpha = 0.2) +
+        geom_errorbar(data = df_means,
+                      aes(ymin = Leanperc_mean - (Leanperc_sd/sqrt(Leanperc_n)),
+                          ymax = Leanperc_mean + (Leanperc_sd/sqrt(Leanperc_n)),
+                          x = weeks,
+                          color = Treatment_group), width=0.1) +
+        stat_pvalue_manual(leanp_lm, y.position = 85, label = "p_signif", 
+                           remove.bracket = TRUE, bracket.size = 0) +
+        scale_color_jama(guide = "none") + 
+        scale_y_continuous(limits = c(55,90), breaks = seq(from = 55, to = 90, by = 5)) +
+        theme_Publication() +
+        labs(x = "Weeks", y = "Lean weight (%)", title = "Lean weight"))
+
+(plot_tbwp <- ggplot() +
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 55, ymax = 90),
+                  fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_means, aes(x = weeks, y = TBWperc_mean, 
+                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
+        geom_line(data = df_bia, aes(x = weeks, y = TBWperc,
+                                     color = Treatment_group, group = ID), alpha = 0.2) +
+        geom_errorbar(data = df_means,
+                      aes(ymin = TBWperc_mean - (TBWperc_sd/sqrt(TBWperc_n)),
+                          ymax = TBWperc_mean + (TBWperc_sd/sqrt(TBWperc_n)),
+                          x = weeks,
+                          color = Treatment_group), width=0.1) +
+        stat_pvalue_manual(tbwperc_lm, y.position = 85, label = "p_signif", 
+                           remove.bracket = TRUE, bracket.size = 0) +
+        scale_color_jama(guide = "none") + 
+        scale_y_continuous(limits = c(40,70), breaks = seq(from = 45, to = 70, by = 5)) +
+        theme_Publication() +
+        labs(x = "Weeks", y = "Total body water (%)", title = "Total body water"))
+
+
+(plot_tbwp <- ggplot() +
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 55, ymax = 90),
+                  fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_means, aes(x = weeks, y = ECWperc_mean, 
+                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
+        geom_line(data = df_bia, aes(x = weeks, y = ECWperc,
+                                     color = Treatment_group, group = ID), alpha = 0.2) +
+        geom_errorbar(data = df_means,
+                      aes(ymin = ECWperc_mean - (ECWperc_sd/sqrt(TBWperc_n)),
+                          ymax = ECWperc_mean + (ECWperc_sd/sqrt(TBWperc_n)),
+                          x = weeks,
+                          color = Treatment_group), width=0.1) +
+        stat_pvalue_manual(tbwperc_lm, y.position = 85, label = "p_signif", 
+                           remove.bracket = TRUE, bracket.size = 0) +
+        scale_color_jama(guide = "none") + 
+        scale_y_continuous(limits = c(5,20), breaks = seq(from = 5, to = 20, by = 5)) +
+        theme_Publication() +
+        labs(x = "Weeks", y = "Extracellular body water (%)", title = "Extracellular body water"))
