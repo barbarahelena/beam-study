@@ -100,6 +100,15 @@ linearmixed_homebp <- function(data, var){
     return(statres)
 }
 
+save_function_bp <- function(plot, group, name, width = 5, height = 4){
+    ggsave(plot = plot, 
+           filename = str_c("results/", group, "/", name, ".pdf"), width = width, height = height)
+    ggsave(plot = plot, 
+           filename = str_c("results/", group, "/", name, ".svg"), width = width, height = height)
+    ggsave(plot = plot, 
+           filename = str_c("results/", group, "/", name, ".png"), width = width, height = height)
+}
+
 # Data
 df <- readRDS("data/demographics_BEAM.RDS")
 bia <- readRDS("data/bia_data.RDS") %>% select(ID, visit, BMI)
@@ -295,7 +304,7 @@ df_homebp <- full_join(homebp, df, by= c("ID")) %>%
             week < 0 ~ paste0(week + 1),
             week > 0 ~ paste0(week),
     ), week = as.numeric(week)) %>% 
-    filter(week %in% c(1:5)) %>% 
+    filter(week %in% c(1:5)) %>%
     droplevels(.) 
 
 df_homebp_filter <- df_homebp %>% select(ID, contains("sbp")) %>% 
@@ -378,6 +387,9 @@ ggarrange(plot_homebp_1, plot_homebp_2, plot_homebp_3, nrow = 1, ncol = 3)
 ggsave(filename = "results/homebp/homebp_lineplots_with_lmm.svg", width = 12, height = 4)
 ggsave(filename = "results/homebp/homebp_lineplots_with_lmm.pdf", width = 12, height = 4)
 
+save_function_bp(plot_homebp_1, "homebp", "home_sbp")
+save_function_bp(plot_homebp_1, "homebp", "home_dbp")
+save_function_bp(plot_homebp_1, "homebp", "home_pulse")
 
 #### Office BP ####
 df_office <- right_join(officebp, right_join(covariates, df, by = "ID"), by= c("ID", "visit")) %>% 
@@ -467,3 +479,37 @@ ggarrange(plot_officesbp, plot_officedbp, plot_officepulse, nrow = 1, ncol = 3)
 ggsave(filename = "results/officebp/officebp_lineplots_with_lmm.svg", width = 12, height = 4)
 ggsave(filename = "results/officebp/officebp_lineplots_with_lmm.pdf", width = 12, height = 4)
 
+officebp_boxplots <- df_office %>% 
+    mutate(before_after = case_when(
+        visit == "V2" ~ paste0("Before"),
+        visit == "V4" ~ paste0("Treatment"),
+        visit == "V5" ~ paste0("After")
+    ),
+    before_after = fct_relevel(before_after, "Before", after = 0L),
+    before_after = fct_relevel(before_after, "After", after = 2L))
+
+(boxplot_officesbp <- ggplot(officebp_boxplots, aes(x = before_after, y = Systolic)) +
+        geom_boxplot(aes(fill = Treatment_group), outlier.shape = NA) +
+        geom_point(size = 0.75)+
+        geom_line(aes(color = Treatment_group, group = ID), alpha = 0.2) +
+        stat_compare_means(method = "wilcox.test", label = "p.signif",
+                           comparisons = list(c("Before", "Treatment"), c("Treatment", "After"))) +
+        facet_wrap(~Treatment_group) + 
+        scale_fill_jama(guide = "none") +
+        scale_color_jama(guide = "none") +
+        labs(x = "", title = "Office systolic BP", y = "Systolic BP (mmHg)") +
+        theme_Publication() )
+save_function_bp(boxplot_officesbp, "officebp", "boxplot_officesbp", height = 5)
+
+(boxplot_officedbp <- ggplot(officebp_boxplots, aes(x = before_after, y = Diastolic)) +
+        geom_boxplot(aes(fill = Treatment_group), outlier.shape = NA) +
+        geom_point(size = 0.75)+
+        geom_line(aes(color = Treatment_group, group = ID), alpha = 0.2) +
+        stat_compare_means(method = "wilcox.test", label = "p.signif",
+                           comparisons = list(c("Before", "Treatment"), c("Treatment", "After"))) +
+        facet_wrap(~Treatment_group) + 
+        scale_fill_jama(guide = "none") +
+        scale_color_jama(guide = "none") +
+        labs(x = "", title = "Office diastolic BP", y = "Diastolic BP (mmHg)") +
+        theme_Publication() )
+save_function_bp(boxplot_officesbp, "officebp", "boxplot_officedbp", height = 5)
