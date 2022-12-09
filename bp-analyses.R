@@ -5,6 +5,8 @@
 library(tidyverse)
 library(lme4)
 library(afex)
+library(ggpubr)
+library(ggsci)
 
 # Functions
 theme_Publication <- function(base_size=12, base_family="sans") {
@@ -171,7 +173,7 @@ awsys_lm <- c()
 awsys_lm <- df_total %>% linearmixed(Awake_systolic_Mean)
 
 (plotb <- ggplot() +
-    geom_rect(aes(xmin = 0, xmax = 4, ymin = 90, ymax = 165), 
+    geom_rect(aes(xmin = 0, xmax = 4, ymin = 105, ymax = 165), 
                   fill = "#CDCDCD", alpha = 0.3) +
     geom_line(data = df_means, aes(x = weeks, y = Awake_systolic_Mean_mean, 
                                    color = Treatment_group, group = Treatment_group), alpha = 1) +
@@ -185,7 +187,7 @@ awsys_lm <- df_total %>% linearmixed(Awake_systolic_Mean)
     stat_pvalue_manual(awsys_lm, y.position = 150, label = "p_signif", 
                        remove.bracket = TRUE, bracket.size = 0) +
     scale_color_jama(guide = "none") + 
-    scale_y_continuous(limits = c(90,165), breaks = seq(from = 90, to = 170, by = 10)) +
+    scale_y_continuous(limits = c(105,165), breaks = seq(from = 105, to = 170, by = 10)) +
     theme_Publication() +
     labs(x = "Weeks", y = "Systolic BP (mmHg)", title = "Daytime systolic BP"))
 
