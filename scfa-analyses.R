@@ -105,14 +105,18 @@ df_scfa <- right_join(df, lab, by = "ID") %>%
                visit == "V5" ~ paste0(5)
            ),
            weeks = as.numeric(weeks)) %>% 
-    filter(ID != "BEAM_573") %>% # exclude beam_573 because off chart conc at V2
+    #filter(ID != "BEAM_573") %>% # exclude beam_573 because off chart conc at V2
     droplevels(.) 
 
 df_means <- df_scfa %>% 
     select(ID, contains("DW"), contains("WW"), weeks, Treatment_group) %>% 
     group_by(Treatment_group, weeks) %>% 
     summarise(across(contains("DW") | contains("WW"), 
-                     list(mean = mean, sd = sd), .names = "{.col}_{.fn}"))
+                 list(mean = ~mean(.x, na.rm = TRUE),
+                      sd = ~sd(.x, na.rm = TRUE),
+                      n = ~length(.x)
+                 ),
+                 .names = "{.col}_{.fn}"))
 
 #### SCFA plots with LMMs ####
 dw_acetate_lm <- c()
@@ -126,8 +130,8 @@ dw_acetate_lm <- df_scfa %>% linearmixed(DW_AA_umolg)
         geom_line(data = df_scfa, aes(x = weeks, y = DW_AA_umolg,
                                        color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = df_means,
-                      aes(ymin = DW_AA_umolg_mean - (DW_AA_umolg_sd/sqrt(11)),
-                          ymax = DW_AA_umolg_mean + (DW_AA_umolg_sd/sqrt(11)),
+                      aes(ymin = DW_AA_umolg_mean - (DW_AA_umolg_sd/sqrt(DW_AA_umolg_n)),
+                          ymax = DW_AA_umolg_mean + (DW_AA_umolg_sd/sqrt(DW_AA_umolg_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(dw_acetate_lm, y.position = 300, label = "p_signif", 
@@ -148,8 +152,8 @@ dw_butyrate_lm <- df_scfa %>% linearmixed(DW_BA_umolg)
         geom_line(data = df_scfa, aes(x = weeks, y = DW_BA_umolg,
                                       color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = df_means,
-                      aes(ymin = DW_BA_umolg_mean - (DW_BA_umolg_sd/sqrt(11)),
-                          ymax = DW_BA_umolg_mean + (DW_BA_umolg_sd/sqrt(11)),
+                      aes(ymin = DW_BA_umolg_mean - (DW_BA_umolg_sd/sqrt(DW_BA_umolg_n)),
+                          ymax = DW_BA_umolg_mean + (DW_BA_umolg_sd/sqrt(DW_BA_umolg_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(dw_butyrate_lm, y.position = 150, label = "p_signif", 
@@ -170,8 +174,8 @@ dw_propionate_lm <- df_scfa %>% linearmixed(DW_PA_umolg)
         geom_line(data = df_scfa, aes(x = weeks, y = DW_PA_umolg,
                                       color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = df_means,
-                      aes(ymin = DW_PA_umolg_mean - (DW_PA_umolg_sd/sqrt(11)),
-                          ymax = DW_PA_umolg_mean + (DW_PA_umolg_sd/sqrt(11)),
+                      aes(ymin = DW_PA_umolg_mean - (DW_PA_umolg_sd/sqrt(DW_PA_umolg_n)),
+                          ymax = DW_PA_umolg_mean + (DW_PA_umolg_sd/sqrt(DW_PA_umolg_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(dw_propionate_lm, y.position = 150, label = "p_signif", 
@@ -192,8 +196,8 @@ dw_fa_lm <- df_scfa %>% linearmixed(DW_FA_umolg)
         geom_line(data = df_scfa, aes(x = weeks, y = DW_FA_umolg,
                                       color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = df_means,
-                      aes(ymin = DW_FA_umolg_mean - (DW_FA_umolg_sd/sqrt(11)),
-                          ymax = DW_FA_umolg_mean + (DW_FA_umolg_sd/sqrt(11)),
+                      aes(ymin = DW_FA_umolg_mean - (DW_FA_umolg_sd/sqrt(DW_FA_umolg_n)),
+                          ymax = DW_FA_umolg_mean + (DW_FA_umolg_sd/sqrt(DW_FA_umolg_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(dw_fa_lm, y.position = 25, label = "p_signif", 
@@ -216,8 +220,8 @@ ww_acetate_lm <- df_scfa %>% linearmixed(WW_AA_umolg)
         geom_line(data = df_scfa, aes(x = weeks, y = WW_AA_umolg,
                                       color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = df_means,
-                      aes(ymin = WW_AA_umolg_mean - (WW_AA_umolg_sd/sqrt(11)),
-                          ymax = WW_AA_umolg_mean + (WW_AA_umolg_sd/sqrt(11)),
+                      aes(ymin = WW_AA_umolg_mean - (WW_AA_umolg_sd/sqrt(WW_AA_umolg_n)),
+                          ymax = WW_AA_umolg_mean + (WW_AA_umolg_sd/sqrt(WW_AA_umolg_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(ww_acetate_lm, y.position = 90, label = "p_signif", 
@@ -238,8 +242,8 @@ ww_butyrate_lm <- df_scfa %>% linearmixed(WW_BA_umolg)
         geom_line(data = df_scfa, aes(x = weeks, y = WW_BA_umolg,
                                       color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = df_means,
-                      aes(ymin = WW_BA_umolg_mean - (WW_BA_umolg_sd/sqrt(11)),
-                          ymax = WW_BA_umolg_mean + (WW_BA_umolg_sd/sqrt(11)),
+                      aes(ymin = WW_BA_umolg_mean - (WW_BA_umolg_sd/sqrt(WW_BA_umolg_n)),
+                          ymax = WW_BA_umolg_mean + (WW_BA_umolg_sd/sqrt(WW_BA_umolg_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(ww_butyrate_lm, y.position = 35, label = "p_signif", 
@@ -260,8 +264,8 @@ ww_propionate_lm <- df_scfa %>% linearmixed(WW_PA_umolg)
         geom_line(data = df_scfa, aes(x = weeks, y = WW_PA_umolg,
                                       color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = df_means,
-                      aes(ymin = WW_PA_umolg_mean - (WW_PA_umolg_sd/sqrt(11)),
-                          ymax = WW_PA_umolg_mean + (WW_PA_umolg_sd/sqrt(11)),
+                      aes(ymin = WW_PA_umolg_mean - (WW_PA_umolg_sd/sqrt(WW_PA_umolg_n)),
+                          ymax = WW_PA_umolg_mean + (WW_PA_umolg_sd/sqrt(WW_PA_umolg_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(ww_propionate_lm, y.position = 35, label = "p_signif", 
@@ -282,8 +286,8 @@ ww_fa_lm <- df_scfa %>% linearmixed(WW_FA_umolg)
         geom_line(data = df_scfa, aes(x = weeks, y = WW_FA_umolg,
                                       color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = df_means,
-                      aes(ymin = WW_FA_umolg_mean - (WW_FA_umolg_sd/sqrt(11)),
-                          ymax = WW_FA_umolg_mean + (WW_FA_umolg_sd/sqrt(11)),
+                      aes(ymin = WW_FA_umolg_mean - (WW_FA_umolg_sd/sqrt(WW_FA_umolg_n)),
+                          ymax = WW_FA_umolg_mean + (WW_FA_umolg_sd/sqrt(WW_FA_umolg_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(ww_fa_lm, y.position = 5, label = "p_signif", 
