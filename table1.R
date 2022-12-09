@@ -22,6 +22,7 @@ df_total <- right_join(df_total, lab_v2, by = "ID")
 df_total <- right_join(df_total, nexfin_v2, by = "ID")
 head(df_total)
 names(df_total)
+df_total <- df_total %>% filter(! ID %in% c("BEAM_664", "BEAM_713", "BEAM_299"))
 
 # Table 1
 table1 <- df_total %>% 
