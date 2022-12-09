@@ -76,13 +76,13 @@ linearmixed_bia <- function(data, var){
     return(statres)
 }
 
-save_function <- function(plot, name){
+save_function_bia <- function(plot, name, a = 5, b = 4){
     ggsave(plot = plot, 
-           filename = str_c("results/bia/", name, ".pdf"), width = 5, height = 4)
+           filename = str_c("results/bia/", name, ".pdf"), width = a, height = b)
     ggsave(plot = plot, 
-           filename = str_c("results/bia/", name, ".svg"), width = 5, height = 4)
+           filename = str_c("results/bia/", name, ".svg"), width = a, height = b)
     ggsave(plot = plot, 
-           filename = str_c("results/bia/", name, ".png"), width = 5, height = 4)
+           filename = str_c("results/bia/", name, ".png"), width = a, height = b)
 }
 
 #### Data ####
@@ -128,6 +128,7 @@ df_means <- df_bia %>%
 #### BIA plots with LMMs ####
 bmi_lm <- df_bia %>% linearmixed_bia(BMI)
 ffmi_lm <- df_bia %>% linearmixed_bia(FFMI)
+fmi_lm <- df_bia %>% linearmixed_bia(BFMI)
 fm_lm <- df_bia %>% linearmixed_bia(Fatmass)
 fatp_lm <- df_bia %>% linearmixed_bia(Fatperc)
 leanp_lm <- df_bia %>% linearmixed_bia(Leanperc)
@@ -151,7 +152,7 @@ icwp_lm <- df_bia %>% linearmixed_bia(ICWperc)
                           ymax = BMI_mean + (BMI_sd/sqrt(BMI_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(bmi_lm, y.position = 300, label = "p_signif", 
+        stat_pvalue_manual(bmi_lm, y.position = 28, label = "p_signif",
                            remove.bracket = TRUE, bracket.size = 0) +
         scale_color_jama(guide = "none") + 
         scale_y_continuous(limits = c(18,30), breaks = seq(from = 18, to = 30, by = 2)) +
@@ -170,12 +171,50 @@ icwp_lm <- df_bia %>% linearmixed_bia(ICWperc)
                           ymax = FFMI_mean + (FFMI_sd/sqrt(BMI_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(dw_acetate_lm, y.position = 300, label = "p_signif", 
+        stat_pvalue_manual(ffmi_lm, y.position = 20, label = "p_signif", 
                            remove.bracket = TRUE, bracket.size = 0) +
         scale_color_jama(guide = "none") + 
         scale_y_continuous(limits = c(12,22), breaks = seq(from = 12, to = 22, by = 2)) +
         theme_Publication() +
         labs(x = "Weeks", y = "FFMI (kg/m2)", title = "FFMI"))
+
+(plot_fmi <- ggplot() +
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 12),
+                  fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_means, aes(x = weeks, y = BFMI_mean, 
+                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
+        geom_line(data = df_bia, aes(x = weeks, y = BFMI,
+                                     color = Treatment_group, group = ID), alpha = 0.2) +
+        geom_errorbar(data = df_means,
+                      aes(ymin = BFMI_mean - (BFMI_sd/sqrt(BFMI_n)),
+                          ymax = BFMI_mean + (BFMI_sd/sqrt(BFMI_n)),
+                          x = weeks,
+                          color = Treatment_group), width=0.1) +
+        stat_pvalue_manual(fmi_lm, y.position = 10, label = "p_signif", 
+                           remove.bracket = TRUE, bracket.size = 0) +
+        scale_color_jama(guide = "none") + 
+        scale_y_continuous(limits = c(0,12), breaks = seq(from = 0, to = 12, by = 2)) +
+        theme_Publication() +
+        labs(x = "Weeks", y = "FMI (kg/m2)", title = "FMI"))
+
+(plot_fatp <- ggplot() +
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 15, ymax = 40),
+                  fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_means, aes(x = weeks, y = Fatperc_mean, 
+                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
+        geom_line(data = df_bia, aes(x = weeks, y = Fatperc,
+                                     color = Treatment_group, group = ID), alpha = 0.2) +
+        geom_errorbar(data = df_means,
+                      aes(ymin = Fatperc_mean - (Fatperc_sd/sqrt(Fatperc_n)),
+                          ymax = Fatperc_mean + (Fatperc_sd/sqrt(Fatperc_n)),
+                          x = weeks,
+                          color = Treatment_group), width=0.1) +
+        stat_pvalue_manual(fatp_lm, y.position = 35, label = "p_signif", 
+                           remove.bracket = TRUE, bracket.size = 0) +
+        scale_color_jama(guide = "none") + 
+        scale_y_continuous(limits = c(15,40), breaks = seq(from = 15, to = 40, by = 5)) +
+        theme_Publication() +
+        labs(x = "Weeks", y = "Fat percentage (%)", title = "Fat percentage"))
 
 (plot_leanp <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 55, ymax = 90),
@@ -197,7 +236,7 @@ icwp_lm <- df_bia %>% linearmixed_bia(ICWperc)
         labs(x = "Weeks", y = "Lean weight (%)", title = "Lean weight"))
 
 (plot_tbwp <- ggplot() +
-        geom_rect(aes(xmin = 0, xmax = 4, ymin = 55, ymax = 90),
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 40, ymax = 70),
                   fill = "#CDCDCD", alpha = 0.3) +
         geom_line(data = df_means, aes(x = weeks, y = TBWperc_mean, 
                                        color = Treatment_group, group = Treatment_group), alpha = 1) +
@@ -208,7 +247,7 @@ icwp_lm <- df_bia %>% linearmixed_bia(ICWperc)
                           ymax = TBWperc_mean + (TBWperc_sd/sqrt(TBWperc_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(tbwperc_lm, y.position = 85, label = "p_signif", 
+        stat_pvalue_manual(tbwperc_lm, y.position = 65, label = "p_signif", 
                            remove.bracket = TRUE, bracket.size = 0) +
         scale_color_jama(guide = "none") + 
         scale_y_continuous(limits = c(40,70), breaks = seq(from = 45, to = 70, by = 5)) +
@@ -216,8 +255,8 @@ icwp_lm <- df_bia %>% linearmixed_bia(ICWperc)
         labs(x = "Weeks", y = "Total body water (%)", title = "Total body water"))
 
 
-(plot_tbwp <- ggplot() +
-        geom_rect(aes(xmin = 0, xmax = 4, ymin = 55, ymax = 90),
+(plot_ebwp <- ggplot() +
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 5, ymax = 20),
                   fill = "#CDCDCD", alpha = 0.3) +
         geom_line(data = df_means, aes(x = weeks, y = ECWperc_mean, 
                                        color = Treatment_group, group = Treatment_group), alpha = 1) +
@@ -228,9 +267,22 @@ icwp_lm <- df_bia %>% linearmixed_bia(ICWperc)
                           ymax = ECWperc_mean + (ECWperc_sd/sqrt(TBWperc_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(tbwperc_lm, y.position = 85, label = "p_signif", 
+        stat_pvalue_manual(ecw_lm, y.position = 17.5, label = "p_signif", 
                            remove.bracket = TRUE, bracket.size = 0) +
         scale_color_jama(guide = "none") + 
         scale_y_continuous(limits = c(5,20), breaks = seq(from = 5, to = 20, by = 5)) +
         theme_Publication() +
         labs(x = "Weeks", y = "Extracellular body water (%)", title = "Extracellular body water"))
+
+(pl_bia <- ggarrange(plot_bmi, plot_ffmi, plot_fmi, plot_fatp, plot_tbwp, plot_ebwp, 
+                        labels = c("A", "B", "C", "D", "E", "F"),
+                        nrow = 2, ncol = 3))
+save_function_bia(pl_bia, "bia_plots", a = 9, b = 6)
+
+save_function_bia(plot_bmi, "bmi_bia")
+save_function_bia(plot_ffmi, "ffmi_bia")
+save_function_bia(plot_fmi, "fmi_bia")
+save_function_bia(plot_fatp, "fatp_bia")
+save_function_bia(plot_tbwp, "tbwp_bia")
+save_function_bia(plot_ebwp, "ecw_bia")
+save_function_bia(plot_drylean, "drylean_bia")
