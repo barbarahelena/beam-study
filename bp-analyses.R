@@ -7,6 +7,7 @@ library(lme4)
 library(afex)
 library(ggpubr)
 library(ggsci)
+library(patchwork)
 
 # Functions
 theme_Publication <- function(base_size=12, base_family="sans") {
@@ -279,22 +280,20 @@ asldia_lm <- c()
         theme_Publication() +
         labs(x = "Weeks", y = "Diastolic BP (mmHg)", title = "Nighttime diastolic BP"))
 
-ggarrange(plota, plotb, plotc, plotd, plote, plotf, nrow = 2, ncol = 3)
-ggsave(filename = "results/abpm/abpm_outcomes_lineplots_with_lmm.pdf", width = 7, height = 5)
-ggsave(filename = "results/abpm/abpm_outcomes_lineplots_with_lmm.svg", width = 7, height = 5)
-ggsave(plot = plota, filename = "results/abpm/total_sbp_lmm.pdf", width = 5, height = 4)
-ggsave(plot = plotb, filename = "results/abpm/day_sbp_lmm.pdf", width = 5, height = 4)
-ggsave(plot = plotc, filename = "results/abpm/night_sbp_lmm.pdf", width = 5, height = 4)
-ggsave(plot = plotd, filename = "results/abpm/total_dbp_lmm.pdf", width = 5, height = 4)
-ggsave(plot = plote, filename = "results/abpm/day_dbp_lmm.pdf", width = 5, height = 4)
-ggsave(plot = plotf, filename = "results/abpm/night_dbp_lmm.pdf", width = 5, height = 4)
+(plot_total <- ggarrange(plota, plotb, plotc, plotd, plote, plotf, nrow = 2, ncol = 3))
+save_function_bp(plot_total, group = "abpm", name = "abpm_lineplots_lmm", width = 7, height = 5)
 
-ggsave(plot = plota, filename = "results/abpm/total_sbp_lmm.svg", width = 5, height = 4)
-ggsave(plot = plotb, filename = "results/abpm/day_sbp_lmm.svg", width = 5, height = 4)
-ggsave(plot = plotc, filename = "results/abpm/night_sbp_lmm.svg", width = 5, height = 4)
-ggsave(plot = plotd, filename = "results/abpm/total_dbp_lmm.svg", width = 5, height = 4)
-ggsave(plot = plote, filename = "results/abpm/day_dbp_lmm.svg", width = 5, height = 4)
-ggsave(plot = plotf, filename = "results/abpm/night_dbp_lmm.svg", width = 5, height = 4)
+(plot_emphasis <- (plotb / plote) | 
+    ((plota | plotc) / (plotd | plotf))) + plot_layout(widths = c(3,4))
+save_function_bp(plot_emphasis, group = "abpm", name = "abpm_lineplots_emphasis", 
+                 width = 9, height = 6)
+
+save_function_bp(plota, group = "abpm", name = "total_sbp_lmm")
+save_function_bp(plotb, group = "abpm", name = "day_sbp_lmm")
+save_function_bp(plotc, group = "abpm", name = "night_sbp_lmm")
+save_function_bp(plotd, group = "abpm", name = "total_dbp_lmm")
+save_function_bp(plote, group = "abpm", name = "day_dbp_lmm")
+save_function_bp(plotf, group = "abpm", name = "night_dbp_lmm")
 
 #### Home BP ####
 str(homebp)
