@@ -108,7 +108,8 @@ plot_lmm <- function(results, dfname){
         #                               0.1, 0.2, 0.3, 0.4, 0.5)) +
         scale_color_manual(values = colors) + 
         scale_shape_manual(values = c(21,19), guide = "none") +
-        theme(legend.title = element_blank())
+        theme(legend.title = element_blank(),
+              legend.position = "bottom")
     return(pl1)
 }
 
