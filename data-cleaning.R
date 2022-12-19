@@ -47,6 +47,7 @@ df <- rio::import("data/BEAM_export_20221124.csv")
 groups <- rio::import("data/treatment_groups.xlsx")
 fecalscfa <- rio::import("data/221201_Fecal_SCFA_tidy.xlsx") %>%
     select(ID = Studienummer, visit = Visit, contains("DW"), contains("WW"))
+reninaldo <- readxl::read_xlsx("data/15122022_ReninAldo_ErasmusMC.xlsx", skip = 3)
 ## repeated measurements to be inserted here (AE and medication)
 
 # Change participant Id into ID
@@ -522,6 +523,14 @@ print(urine, n = 63)
 
 saveRDS(urine, "data/urinesamples.RDS")
 write.csv2(urine, "data/urinesamples.csv")
+
+#### Renin aldo ####
+reninaldo <- reninaldo %>% select(Sample_ID, ID = Subject_ID, Renin = Kolom1, 
+                                  Aldosterone = Kolom2) %>% 
+    mutate(visit = str_extract(Sample_ID, "V[0-9]")) %>% 
+    filter(str_detect(ID, "BEAM"))
+saveRDS(reninaldo, "data/reninaldo.RDS")
+write.csv2(reninaldo, "data/reninaldo.csv")
 
 #### Intervention ####
 str(intervention)
