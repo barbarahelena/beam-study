@@ -17,17 +17,18 @@ lab <- readRDS("data/lab_results.RDS")
 lab_v2 <- lab %>% filter(visit == "V2") %>% select(ID, GFR, TC, HDL, LDL, TG)
 nexfin <- readRDS("data/nexfin_data.RDS")
 nexfin_v2 <- nexfin %>% filter(visit == "V2") %>% select(ID, meanBRS, SDNN)
-df_total <- right_join(df, officebp_v2, by = "ID")
-df_total <- right_join(df_total, bmi, by = "ID")
-df_total <- right_join(df_total, lab_v2, by = "ID")
-df_total <- right_join(df_total, nexfin_v2, by = "ID")
-df_total <- right_join(df_total, diet, by = "ID")
+df_total <- right_join(officebp_v2, df, by = "ID")
+df_total <- right_join(bmi, df_total, by = "ID")
+df_total <- right_join(lab_v2, df_total, by = "ID")
+df_total <- right_join(nexfin_v2, df_total, by = "ID")
+df_total <- right_join(diet, df_total, by = "ID")
 head(df_total)
 names(df_total)
-df_total <- df_total %>% filter(! ID %in% c("BEAM_664", "BEAM_713", "BEAM_299"))
+df_total <- df_total %>% filter(! ID %in% c("BEAM_664")) %>% ungroup()
 
 # Table 1
-table1 <- df_total %>% 
+table1 <- df_total %>%
+    filter(! visit %in% c("V4", "V5")) %>% 
     select(Age, Sex, BMI, Smoking, 
            # VG? CVD?
            BPlowMed, 
@@ -41,4 +42,5 @@ table1 <- df_total %>%
     CreateTableOne(data=., strata = 'Treatment_group', test = TRUE, addOverall = TRUE) %>% 
     print()
 write.csv2(table1, "results/table1.csv")
+
 
