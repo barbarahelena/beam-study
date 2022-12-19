@@ -252,27 +252,30 @@ reninaldo_boxplots <- df_ra %>%
         geom_boxplot(aes(fill = Treatment_group), outlier.shape = NA) +
         geom_point(size = 0.75)+
         geom_line(aes(color = Treatment_group, group = ID), alpha = 0.2) +
-        stat_compare_means(method = "wilcox.test", label = "p.signif",
+        stat_compare_means(method = "t.test", label = "p.signif",
                            comparisons = list(c("Before", "Treatment"), c("Treatment", "After"))) +
         facet_wrap(~Treatment_group) + 
         scale_fill_jama(guide = "none") +
         scale_color_jama(guide = "none") +
         labs(x = "", title = "Aldosterone", y = "Aldosterone (pg/ml)") +
-        theme_Publication() )
-save_function_reninaldo(boxplot_aldo, "boxplot_aldo", height = 5)
+        theme_Publication()+
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)))
+save_function_reninaldo(boxplot_aldo, "boxplot_aldo", b = 5)
 
 (boxplot_renin <- ggplot(reninaldo_boxplots, aes(x = before_after, y = Renin)) +
         geom_boxplot(aes(fill = Treatment_group), outlier.shape = NA) +
         geom_point(size = 0.75)+
         geom_line(aes(color = Treatment_group, group = ID), alpha = 0.2) +
         stat_compare_means(method = "wilcox.test", label = "p.signif",
-                           comparisons = list(c("Before", "Treatment"), c("Treatment", "After"))) +
+                           comparisons = list(c("Before", "Treatment"), 
+                                              c("Treatment", "After"))) +
         facet_wrap(~Treatment_group) + 
         scale_fill_jama(guide = "none") +
         scale_color_jama(guide = "none") +
         labs(x = "", title = "Renin", y = "Renin (pg/ml)") +
-        theme_Publication())
-save_function_reninaldo(boxplot_renin, "boxplot_aldo", height = 5)
+        theme_Publication() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)))
+save_function_reninaldo(boxplot_renin, "boxplot_renin", b = 5)
 
 (boxplot_arr <- ggplot(reninaldo_boxplots, aes(x = before_after, y = ARR)) +
         geom_boxplot(aes(fill = Treatment_group), outlier.shape = NA) +
@@ -284,5 +287,10 @@ save_function_reninaldo(boxplot_renin, "boxplot_aldo", height = 5)
         scale_fill_jama(guide = "none") +
         scale_color_jama(guide = "none") +
         labs(x = "", title = "Aldosterone-renin ratio", y = "ARR") +
-        theme_Publication())
-save_function_reninaldo(boxplot_renin, "boxplot_arr", height = 5)
+        theme_Publication()+
+        theme(axis.text.x = element_text(angle = 45, hjust = 1)))
+save_function_reninaldo(boxplot_arr, "boxplot_arr", b = 5)
+
+boxplots_reninaldo <- ggarrange(boxplot_renin, boxplot_aldo, boxplot_arr,
+                                nrow = 1, ncol = 3, labels = c("A", "B", "C")) 
+save_function_reninaldo(boxplots_reninaldo, "boxplots_reninaldo", a = 10, b = 4)
