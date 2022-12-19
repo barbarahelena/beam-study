@@ -31,7 +31,7 @@ theme_Publication <- function(base_size=12, base_family="sans") {
                 panel.grid.major = element_line(colour="#f0f0f0"),
                 panel.grid.minor = element_blank(),
                 legend.key = element_rect(colour = NA),
-                legend.position = "right",
+                legend.position = "bottom",
                 # legend.direction = "horizontal",
                 legend.key.size= unit(0.2, "cm"),
                 legend.spacing  = unit(0, "cm"),
@@ -157,10 +157,11 @@ brs_lmm <- linearmixed_nexfin(nexfin_total, meanBRS)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(sbp_lmm, y.position = 170, label =  "p = {pval}", 
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(100, 200), breaks = seq(from = 100, to = 200, by = 10)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Systolic BP (mmHg)", title = "Systolic BP"))
+        labs(x = "Weeks", y = "Systolic BP (mmHg)", title = "Systolic BP",
+             color = ""))
 
 (plot_dbp <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 55, ymax = 100),
@@ -176,10 +177,11 @@ brs_lmm <- linearmixed_nexfin(nexfin_total, meanBRS)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(dbp_lmm, y.position = 90, label =  "p = {pval}", 
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(55, 100), breaks = seq(from = 55, to = 100, by = 5)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Diastolic BP (mmHg)", title = "Diastolic BP"))
+        labs(x = "Weeks", y = "Diastolic BP (mmHg)", title = "Diastolic BP",
+             color = ""))
 
 (plot_co <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 3, ymax = 7.5),
@@ -196,10 +198,11 @@ brs_lmm <- linearmixed_nexfin(nexfin_total, meanBRS)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(co_lmm, y.position = 7.0, label = "p = {pval}", 
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(3,7.5), breaks = seq(from = 3, to = 7.5, by = 0.5)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Cardiac output (L/min)", title = "Cardiac output"))
+        labs(x = "Weeks", y = "Cardiac output (L/min)", title = "Cardiac output",
+             color = ""))
 
 (plot_dpdt<- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 3000),
@@ -215,10 +218,11 @@ brs_lmm <- linearmixed_nexfin(nexfin_total, meanBRS)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(dpdt_lmm, y.position = 2000, label = "p = {pval}", 
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(0,3000), breaks = seq(from = 0, to = 3000, by = 500)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "dPdt", title = "dPdt"))
+        labs(x = "Weeks", y = "dPdt", title = "dPdt",
+             color = ""))
 
 (plot_pnn50<- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 0.3),
@@ -234,10 +238,11 @@ brs_lmm <- linearmixed_nexfin(nexfin_total, meanBRS)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(pnn50_lmm, y.position = 0.2, label = "p = {pval}", 
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(0,0.3), breaks = seq(from = 0, to = 0.3, by = 0.1)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "pNN50 (proportion)", title = "pNN50"))
+        labs(x = "Weeks", y = "pNN50 (proportion)", title = "pNN50",
+             color = ""))
 
 (plot_sdnn<- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 0.10),
@@ -253,10 +258,11 @@ brs_lmm <- linearmixed_nexfin(nexfin_total, meanBRS)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(sdnn_lmm, y.position = 0.08, label = "p = {pval}",
                            remove.bracket = TRUE) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(0,0.10), breaks = seq(from = 0, to = 0.10, by = 0.02)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "SDNN", title = "Heart rate variability"))
+        labs(x = "Weeks", y = "SDNN", title = "Heart rate variability",
+             color = ""))
 
 (plot_brs <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 16),
@@ -272,14 +278,17 @@ brs_lmm <- linearmixed_nexfin(nexfin_total, meanBRS)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(brs_lmm, y.position = 13, label = "p = {pval}",
                            remove.bracket = TRUE) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(0,16), breaks = seq(from = 0, to = 16, by = 2)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "BRS", title = "Baroreceptor sensitivity"))
+        labs(x = "Weeks", y = "BRS", title = "Baroreceptor sensitivity",
+             color = ""))
 
 (pl_nexfin <- ggarrange(plot_sbp, plot_dbp, plot_co, plot_dpdt, plot_brs, plot_sdnn, 
           labels = c("A", "B", "C", "D", "E", "F"),
-          nrow = 2, ncol = 3))
+          nrow = 2, ncol = 3,
+          legend = "bottom",
+          common.legend = TRUE))
 save_function_nexfin(pl_nexfin, "nexfin_plots", width = 9, height = 6)
 
 save_function_nexfin(plot_sbp, "sbp_nexfin")

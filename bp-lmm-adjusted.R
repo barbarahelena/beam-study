@@ -92,7 +92,7 @@ linearmixed_abpm_cov <- function(data, var){
 }
 
 plot_lmm <- function(results, dfname){
-    ylab <- "estimate groupB*time"
+    ylab <- "estimate butyrate*time"
     colors <- pal_lancet()(4)[c(1:4)]
     
     pl1 <- ggplot(results, aes(x=outcome, y=estimate, color=adjust_for, shape = as.factor(p_signif))) +
@@ -188,3 +188,4 @@ total_bp_res <- bind_rows(totsys_lm, totdia_lm, daysys_lm, daydia_lm, nightsys_l
                          sysoffice_lm, diaoffice_lm)
 (plot_all <- plot_lmm(total_bp_res, dfname = "Linear mixed models"))
 save_function_bp(plot_all, group = "abpm", width = 6, height = 5, name = "allbp_lmm")
+

@@ -31,7 +31,7 @@ theme_Publication <- function(base_size=12, base_family="sans") {
                 panel.grid.major = element_line(colour="#f0f0f0"),
                 panel.grid.minor = element_blank(),
                 legend.key = element_rect(colour = NA),
-                legend.position = "right",
+                legend.position = "bottom",
                 # legend.direction = "horizontal",
                 legend.key.size= unit(0.2, "cm"),
                 legend.spacing  = unit(0, "cm"),
@@ -209,10 +209,11 @@ fena_lmm <- linearmixed_excr(urine_total, FENa)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(fena_lmm, y.position = 5, label = "p_signif", 
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(0,1.5), breaks = seq(from = 0, to = 1.5, by = 0.25)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "FENa (%)", title = "Fractional sodium excretion"))
+        labs(x = "Weeks", y = "FENa (%)", title = "Fractional sodium excretion",
+             color = ""))
 
 fek_lmm <- linearmixed_excr(urine_total, FEK)
 
@@ -230,10 +231,11 @@ fek_lmm <- linearmixed_excr(urine_total, FEK)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(fek_lmm, y.position = 5, label = "p_signif", 
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(0,18), breaks = seq(from = 0, to = 18, by = 1)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "FEK (%)", title = "Fractional potassium excretion"))
+        labs(x = "Weeks", y = "FEK (%)", title = "Fractional potassium excretion",
+             color = ""))
 
 urinena_lmm <- linearmixed_excr(urine_total, Urine_Na_Total)
 
@@ -251,10 +253,11 @@ urinena_lmm <- linearmixed_excr(urine_total, Urine_Na_Total)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(urinena_lmm, y.position = 5, label = "p_signif", 
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(0,300), breaks = seq(from = 0, to = 300, by = 50)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Urine sodium (mmol/L)", title = "Urine sodium"))
+        labs(x = "Weeks", y = "Urine sodium (mmol/L)", title = "Urine sodium",
+             color = ""))
 
 urinekreat_lmm <- linearmixed_excr(urine_total, Urine_Kreat_L)
 
@@ -272,10 +275,11 @@ urinekreat_lmm <- linearmixed_excr(urine_total, Urine_Kreat_L)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(urinekreat_lmm, y.position = 5, label = "p_signif", 
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(0,30), breaks = seq(from = 0, to = 30, by = 5)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Urine creatinine (mmol/L)", title = "Total urine creatinine"))
+        labs(x = "Weeks", y = "Urine creatinine (mmol/L)", title = "Total urine creatinine",
+             color = ""))
 
 
 urinegfr_lmm <- linearmixed_excr(urine_total, Creatclearance)
@@ -294,10 +298,11 @@ urinegfr_lmm <- linearmixed_excr(urine_total, Creatclearance)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(urinegfr_lmm, y.position = 5, label = "p_signif", 
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(0,150), breaks = seq(from = 0, to = 150, by = 25)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Creatinine clearance (ml/min)", title = "Creatinine clearance"))
+        labs(x = "Weeks", y = "Creatinine clearance (ml/min)", title = "Creatinine clearance",
+             color = ""))
 
 gfr_lmm <- linearmixed_excr(urine_total, GFR)
 
@@ -315,10 +320,11 @@ gfr_lmm <- linearmixed_excr(urine_total, GFR)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(gfr_lmm, y.position = 5, label = "p_signif", 
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(60,90), breaks = seq(from = 60, to = 90, by = 5)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "eGFR (ml/min/1.73)", title = "eGFR"))
+        labs(x = "Weeks", y = "eGFR (ml/min/1.73)", title = "eGFR",
+             color = ""))
 
 
 plasmana_lmm <- linearmixed_excr(urine_total, Na)
@@ -337,13 +343,16 @@ plasmana_lmm <- linearmixed_excr(urine_total, Na)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(plasmana_lmm, y.position = 5, label = "p_signif", 
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(135, 145), breaks = seq(from = 135, to = 145, by = 1)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Plasma sodium (umol/L)", title = "Plasma sodium"))
+        labs(x = "Weeks", y = "Plasma sodium (umol/L)", title = "Plasma sodium",
+             color = ""))
 
 pl_natrium <- ggarrange(plot_na, plot_plasmana, plot_fena, labels = c("A", "B", "C"),
-          nrow = 1, ncol = 3)
+          nrow = 1, ncol = 3,
+          common.legend = TRUE,
+          legend = "bottom")
 save_function(pl_natrium, "sodium_plasmaurine", width = 10, height = 4)
 
 save_function(plot_totalgfr, "creatclearance")

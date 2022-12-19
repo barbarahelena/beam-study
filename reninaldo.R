@@ -31,7 +31,7 @@ theme_Publication <- function(base_size=12, base_family="sans") {
                 panel.grid.major = element_line(colour="#f0f0f0"),
                 panel.grid.minor = element_blank(),
                 legend.key = element_rect(colour = NA),
-                legend.position = "right",
+                legend.position = "bottom",
                 # legend.direction = "horizontal",
                 legend.key.size= unit(0.2, "cm"),
                 legend.spacing  = unit(0, "cm"),
@@ -161,10 +161,10 @@ arr_lm <- df_ra %>% linearmixed_reninaldo(logARR)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(renin_lm, y.position = 1.5, label = "p_signif",
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(0.25,1.50), breaks = seq(from = 0.25, to = 1.50, by = 0.25)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Log10 renin (pg/ml)", title = "Renin"))
+        labs(x = "Weeks", y = "Log10 renin (pg/ml)", title = "Renin", color = ""))
 
 (plot_logarr <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0.50, ymax = 2.0),
@@ -180,10 +180,10 @@ arr_lm <- df_ra %>% linearmixed_reninaldo(logARR)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(arr_lm, y.position = 2.0, label = "p_signif",
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(0.5,2.0), breaks = seq(from = 0.50, to = 2.0, by = 0.25)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Log10 ARR", title = "Aldosterone-renin ratio"))
+        labs(x = "Weeks", y = "Log10 ARR", title = "Aldosterone-renin ratio", color = ""))
 
 (plot_logaldo <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 1.50, ymax = 2.50),
@@ -199,10 +199,10 @@ arr_lm <- df_ra %>% linearmixed_reninaldo(logARR)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(aldo_lm, y.position = 2.50, label = "p_signif",
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(1.50,2.50), breaks = seq(from = 1.50, to = 2.50, by = 0.25)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Log10 aldosterone (pg/ml)", title = "Aldosterone"))
+        labs(x = "Weeks", y = "Log10 aldosterone (pg/ml)", title = "Aldosterone", color = ""))
 
 # (plot_arr <- ggplot() +
 #         # geom_rect(aes(xmin = 0, xmax = 4, ymin = 18, ymax = 30),
@@ -226,16 +226,14 @@ arr_lm <- df_ra %>% linearmixed_reninaldo(logARR)
 
 (pl_reninaldo <- ggarrange(plot_logrenin, plot_logaldo, plot_logarr,
                      labels = c("A", "B", "C"),
-                     nrow = 1, ncol = 3))
+                     nrow = 1, ncol = 3,
+                     common.legend = TRUE,
+                     legend = "bottom"))
 save_function_reninaldo(pl_reninaldo, "reninaldo_plots", a = 9, b = 3)
 
-save_function_reninaldo(plot_bmi, "bmi_bia")
-save_function_reninaldo(plot_ffmi, "ffmi_bia")
-save_function_reninaldo(plot_fmi, "fmi_bia")
-save_function_reninaldo(plot_fatp, "fatp_bia")
-save_function_reninaldo(plot_tbwp, "tbwp_bia")
-save_function_reninaldo(plot_ebwp, "ecw_bia")
-save_function_reninaldo(plot_drylean, "drylean_bia")
+save_function_reninaldo(plot_logrenin, "logrenin")
+save_function_reninaldo(plot_logaldo, "logaldo")
+save_function_reninaldo(plot_logarr, "logarr")
 
 
 #### Boxplots ####

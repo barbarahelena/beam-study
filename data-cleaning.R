@@ -43,8 +43,8 @@ theme_Publication <- function(base_size=12, base_family="sans") {
 } 
 
 # Data
-df <- rio::import("data/BEAM_export_20221124.csv")
-groups <- rio::import("data/treatment_groups.xlsx")
+df <- rio::import("data/BEAM_export_20221219.csv")
+# groups <- rio::import("data/treatment_groups.xlsx")
 fecalscfa <- rio::import("data/221201_Fecal_SCFA_tidy.xlsx") %>%
     select(ID = Studienummer, visit = Visit, contains("DW"), contains("WW"))
 reninaldo <- readxl::read_xlsx("data/15122022_ReninAldo_ErasmusMC.xlsx", skip = 3)
@@ -53,10 +53,8 @@ reninaldo <- readxl::read_xlsx("data/15122022_ReninAldo_ErasmusMC.xlsx", skip = 
 # Change participant Id into ID
 df <- df %>% select(ID = `Participant Id`, everything(.), -`V829`)
 names(df)
-names(groups)
 
 # Merge with treatment allocation df and set NA values
-groups <- groups %>%  mutate(Treatment_group = na_if(Treatment_group, "-"))
 df <- right_join(df, groups, by = "ID") %>% 
     naniar::replace_with_na_all(condition = ~(.x == -99 | .x == -96 | .x == -95 |
                                                   .x == -98)) %>% 
@@ -70,7 +68,7 @@ demographics <- df %>% select(ID, Sex, Age, AgeStrata, Smoking, PackYears,
                               eGFR, Date_eGFR, BPlowMed = Medication_BPlowering,
                               HT_years = History_Hypertension_Years, V1_Weight, V1_Height,
                               V1_DateTime, V2_DateTime, V3_DateTime, V4_DateTime, V5_datetime,
-                              Treatment_group, (contains("V1") & contains("BP"))) 
+                              Treatment_group = `Randomization Group`, (contains("V1") & contains("BP"))) 
 homebp <- df %>% select(ID, contains("HomeBP")) 
 diet <- df %>% select(ID, contains("Diet")) 
 bp_measurement <- df %>% select(ID, contains("BP_Measurement")) 
@@ -113,7 +111,8 @@ demographics <- demographics %>%
         AlcoholUse == 1 ~ paste0("Yes"),
         AlcoholUse == 0 ~ paste0("No"))) %>% 
     mutate(across(c("Sex", "Smoking", "BPlowMed", "AlcoholUse", "Treatment_group"), 
-                  as.factor)) %>% 
+                  as.factor),
+           Treatment_group = fct_relevel(Treatment_group, "Butyrate", after = 1L)) %>% 
     right_join(., bp_screening %>% select(-visit), by = "ID") %>%
     rename(V1_Systolic = Systolic, V1_Diastolic = Diastolic, V1_Pulse = Pulse)
     
@@ -150,11 +149,6 @@ homebp <- homebp %>% rename_with(., stripnames_homebp) %>%
     filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713"))
 names(homebp)
 str(homebp)
-
-# Found typo in data; remove this upon next data export
-homebp$V3_week1_2_morning_DiastolicBP
-homebp$V3_week1_2_morning_DiastolicBP[which(homebp$V3_week1_2_morning_DiastolicBP == 960)] <- 96
-homebp$V3_week1_2_morning_DiastolicBP
 
 # min needs to pivot separately (has no timing); dates need to pivot separately
 homebp_dates <- homebp %>% select(ID, contains("Date"))
@@ -313,9 +307,6 @@ diet_long <- diet %>%
     mutate(visit = as.factor(visit))
 head(diet_long)
 
-# found typo in data; corrected in Castor, so remove upon next export
-diet_long$Salt[which(diet_long$Salt == 1104)] <- 11.04
-
 print(diet_long[which(as.numeric(diet_long$Energy) < 1000),], n = 100)
 
 diet_summary <- diet_long %>% mutate(across(.cols = c(3:11), as.numeric)) %>% 
@@ -331,9 +322,6 @@ write.csv2(diet_summary, "data/diet_summary.csv")
 
 #### Nexfin ####
 str(nexfin)
-# correct wrong value (changed in castor, remove upon next export)
-nexfin$V2_Nexfin_MAP[which(nexfin$V2_Nexfin_MAP == "93.9262093.92620137137")] <-
-    "93.92620137"
 
 # select vars
 nexfin <- nexfin %>% select(-contains("Remark"), -contains("yesno"), -contains("File"),
@@ -350,11 +338,6 @@ nexfin_long <- nexfin %>% pivot_longer(., cols = c(2:ncol(nexfin)),
                     pivot_wider(., id_cols = c(1,2), names_from = "variable",
                                 values_from = "value")
 
-# two outliers below have been corrected in Castor; remove upon next export
-nexfin_long$nLargestStableBeats[which(nexfin_long$nLargestStableBeats == 503)] <- 70
-nexfin_long$SVR[which(nexfin_long$SVR == 13)] <- 1359.5487804878
-
-nexfin_long$ID[which(nexfin_long$nLargestStableBeats < 30)]
 head(nexfin_long)
 dim(nexfin_long)
 plot(nexfin_long[,3:15])

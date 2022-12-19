@@ -32,7 +32,7 @@ theme_Publication <- function(base_size=12, base_family="sans") {
                 panel.grid.major = element_line(colour="#f0f0f0"),
                 panel.grid.minor = element_blank(),
                 legend.key = element_rect(colour = NA),
-                legend.position = "right",
+                legend.position = "bottom",
                 # legend.direction = "horizontal",
                 legend.key.size= unit(0.2, "cm"),
                 legend.spacing  = unit(0, "cm"),
@@ -131,8 +131,7 @@ covariates <- right_join(bia,
                             by = c("ID", "visit"))
 df_total <- right_join(abpm, right_join(covariates, df, by = "ID"), by= c("ID", "visit")) %>% 
     filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713")) %>% 
-    mutate(Treatment_group = as.factor(Treatment_group),
-           visit = as.factor(visit), 
+    mutate(visit = as.factor(visit), 
            weeks = case_when(
                visit == "V2" ~ paste0(0),
                visit == "V4" ~ paste0(4),
@@ -165,10 +164,11 @@ totsys_lm <- df_total %>% linearmixed(Total_systolic_Mean)
                       color = Treatment_group), width=0.1) +
     stat_pvalue_manual(totsys_lm, y.position = 150, label = "p_signif", 
                        remove.bracket = TRUE, bracket.size = 0) +
-    scale_color_jama(guide = "none") + 
+    scale_color_jama() + 
     scale_y_continuous(limits = c(90,165), breaks = seq(from = 90, to = 160, by = 10)) +
     theme_Publication() +
-    labs(x = "Weeks", y = "Systolic BP (mmHg)", title = "Average systolic BP"))
+    labs(x = "Weeks", y = "Systolic BP (mmHg)", title = "Average systolic BP", 
+         color = "Treatment"))
 
 awsys_lm <- c()
 awsys_lm <- df_total %>% linearmixed(Awake_systolic_Mean)
@@ -187,10 +187,11 @@ awsys_lm <- df_total %>% linearmixed(Awake_systolic_Mean)
                       color = Treatment_group), width=0.1) +
     stat_pvalue_manual(awsys_lm, y.position = 150, label = "p_signif", 
                        remove.bracket = TRUE, bracket.size = 0) +
-    scale_color_jama(guide = "none") + 
+    scale_color_jama() + 
     scale_y_continuous(limits = c(105,165), breaks = seq(from = 105, to = 170, by = 10)) +
     theme_Publication() +
-    labs(x = "Weeks", y = "Systolic BP (mmHg)", title = "Daytime systolic BP"))
+    labs(x = "Weeks", y = "Systolic BP (mmHg)", title = "Daytime systolic BP",
+         color = "Treatment"))
 
 aslsys_lm <- c()
 aslsys_lm <- df_total %>% linearmixed(Asleep_systolic_Mean)
@@ -209,10 +210,11 @@ aslsys_lm <- df_total %>% linearmixed(Asleep_systolic_Mean)
                       color = Treatment_group), width=0.1) +
     stat_pvalue_manual(aslsys_lm, y.position = 150, label = "p_signif", 
                        remove.bracket = TRUE, bracket.size = 0) +
-    scale_color_jama(guide = "none") + 
+    scale_color_jama() + 
     scale_y_continuous(limits = c(90,165), breaks = seq(from = 90, to = 160, by = 10)) +
     theme_Publication() +
-    labs(x = "Weeks", y = "Systolic BP (mmHg)", title = "Nighttime systolic BP"))
+    labs(x = "Weeks", y = "Systolic BP (mmHg)", title = "Nighttime systolic BP", 
+         color = "Treatment"))
 
 totdia_lm <- c()
 (totdia_lm <- df_total %>% linearmixed(Total_diastolic_Mean))
@@ -231,10 +233,11 @@ totdia_lm <- c()
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(totdia_lm, y.position = 100, label = "p_signif", 
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(45,105), breaks = seq(from = 45, to = 105, by = 5)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Diastolic BP (mmHg)", title = "Average diastolic BP"))
+        labs(x = "Weeks", y = "Diastolic BP (mmHg)", title = "Average diastolic BP", 
+             color = "Treatment"))
 
 awdia_lm <- c()
 (awdia_lm <- df_total %>% linearmixed(Awake_diastolic_Mean))
@@ -253,10 +256,11 @@ awdia_lm <- c()
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(awdia_lm, y.position = 100, label = "p_signif", 
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(45,105), breaks = seq(from = 45, to = 105, by = 5)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Diastolic BP (mmHg)", title = "Daytime diastolic BP"))
+        labs(x = "Weeks", y = "Diastolic BP (mmHg)", title = "Daytime diastolic BP", 
+             color = "Treatment"))
 
 asldia_lm <- c()
 (asldia_lm <- df_total %>% linearmixed(Asleep_diastolic_Mean))
@@ -275,18 +279,23 @@ asldia_lm <- c()
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(asldia_lm, y.position = 100, label = "p_signif", 
                            hide.ns = TRUE, remove.bracket = TRUE) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(45,105), breaks = seq(from = 45, to = 105, by = 5)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Diastolic BP (mmHg)", title = "Nighttime diastolic BP"))
+        labs(x = "Weeks", y = "Diastolic BP (mmHg)", title = "Nighttime diastolic BP", 
+             color = "Treatment"))
 
-(plot_total <- ggarrange(plota, plotb, plotc, plotd, plote, plotf, nrow = 2, ncol = 3))
-save_function_bp(plot_total, group = "abpm", name = "abpm_lineplots_lmm", width = 7, height = 5)
+(plot_total <- ggarrange(plota, plotb, plotc, plotd, plote, plotf, 
+                         nrow = 2, ncol = 3, 
+                         labels = c("A", "B", "C", "D", "E", "F"),
+                         common.legend = TRUE, legend = "bottom"))
+save_function_bp(plot_total, group = "abpm", name = "abpm_lineplots_lmm", width = 10, height = 8)
 
-(plot_emphasis <- (plotb / plote) | 
-    ((plota | plotc) / (plotd | plotf))) + plot_layout(widths = c(3,4))
+plot_emphasis <- ((plotb / plote ) | 
+    ((plota | plotc) / (plotd | plotf)) & theme(legend.position = "bottom")) + 
+    plot_layout(guides = "collect")
 save_function_bp(plot_emphasis, group = "abpm", name = "abpm_lineplots_emphasis", 
-                 width = 9, height = 6)
+                 width = 10, height = 8)
 
 save_function_bp(plota, group = "abpm", name = "total_sbp_lmm")
 save_function_bp(plotb, group = "abpm", name = "day_sbp_lmm")
@@ -427,7 +436,7 @@ officesys_lm <- df_office %>% linearmixed(Systolic)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(officesys_lm, y.position = 160, label = "p_signif", 
                            hide.ns = TRUE, remove.bracket = TRUE) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(115,180), breaks = seq(from = 115, to = 180, by = 10)) +
         theme_Publication() +
         labs(x = "Weeks", y = "Systolic BP (mmHg)", title = "Office systolic BP"))
@@ -449,7 +458,7 @@ officedia_lm <- df_office %>% linearmixed(Diastolic)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(officedia_lm, y.position = 105, label = "p_signif", 
                            hide.ns = TRUE, remove.bracket = TRUE) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(70,110), breaks = seq(from = 70, to = 110, by = 5)) +
         theme_Publication() +
         labs(x = "Weeks", y = "Diastolic BP (mmHg)", title = "Office diastolic BP"))
@@ -471,12 +480,15 @@ officepulse_lm <- df_office %>% linearmixed(Pulse)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(officepulse_lm, y.position = 85, label = "p_signif", 
                            hide.ns = TRUE, remove.bracket = TRUE) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(45,90), breaks = seq(from = 45, to = 90, by = 5)) +
         theme_Publication() +
         labs(x = "Weeks", y = "Pulse / min", title = "Office pulse"))
 
-ggarrange(plot_officesbp, plot_officedbp, plot_officepulse, nrow = 1, ncol = 3)
+ggarrange(plot_officesbp, plot_officedbp, plot_officepulse, nrow = 1, ncol = 3,
+          labels = c("A", "B", "C"),
+          common.legend = TRUE,
+          legend = "bottom")
 ggsave(filename = "results/officebp/officebp_lineplots_with_lmm.svg", width = 12, height = 4)
 ggsave(filename = "results/officebp/officebp_lineplots_with_lmm.pdf", width = 12, height = 4)
 
@@ -493,7 +505,7 @@ officebp_boxplots <- df_office %>%
         geom_boxplot(aes(fill = Treatment_group), outlier.shape = NA) +
         geom_point(size = 0.75)+
         geom_line(aes(color = Treatment_group, group = ID), alpha = 0.2) +
-        stat_compare_means(method = "wilcox.test", label = "p.signif",
+        stat_compare_means(method = "t.test", label = "p.value",
                            comparisons = list(c("Before", "Treatment"), c("Treatment", "After"))) +
         facet_wrap(~Treatment_group) + 
         scale_fill_jama(guide = "none") +
@@ -506,7 +518,7 @@ save_function_bp(boxplot_officesbp, "officebp", "boxplot_officesbp", height = 5)
         geom_boxplot(aes(fill = Treatment_group), outlier.shape = NA) +
         geom_point(size = 0.75)+
         geom_line(aes(color = Treatment_group, group = ID), alpha = 0.2) +
-        stat_compare_means(method = "wilcox.test", label = "p.signif",
+        stat_compare_means(method = "t.test", label = "p.value",
                            comparisons = list(c("Before", "Treatment"), c("Treatment", "After"))) +
         facet_wrap(~Treatment_group) + 
         scale_fill_jama(guide = "none") +
@@ -514,3 +526,4 @@ save_function_bp(boxplot_officesbp, "officebp", "boxplot_officesbp", height = 5)
         labs(x = "", title = "Office diastolic BP", y = "Diastolic BP (mmHg)") +
         theme_Publication() )
 save_function_bp(boxplot_officesbp, "officebp", "boxplot_officedbp", height = 5)
+

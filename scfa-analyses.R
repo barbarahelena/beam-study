@@ -31,7 +31,7 @@ theme_Publication <- function(base_size=12, base_family="sans") {
                 panel.grid.major = element_line(colour="#f0f0f0"),
                 panel.grid.minor = element_blank(),
                 legend.key = element_rect(colour = NA),
-                legend.position = "right",
+                legend.position = "bottom",
                 # legend.direction = "horizontal",
                 legend.key.size= unit(0.2, "cm"),
                 legend.spacing  = unit(0, "cm"),
@@ -136,10 +136,10 @@ dw_acetate_lm <- df_scfa %>% linearmixed(DW_AA_umolg)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(dw_acetate_lm, y.position = 300, label = "p_signif", 
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(0,400), breaks = seq(from = 0, to = 400, by = 50)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Acetate (umol/g)", title = "Fecal acetate (DW)"))
+        labs(x = "Weeks", y = "Acetate (umol/g)", title = "Fecal acetate (DW)", color = ""))
 
 dw_butyrate_lm <- c()
 dw_butyrate_lm <- df_scfa %>% linearmixed(DW_BA_umolg)
@@ -158,10 +158,11 @@ dw_butyrate_lm <- df_scfa %>% linearmixed(DW_BA_umolg)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(dw_butyrate_lm, y.position = 150, label = "p_signif", 
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(0,160), breaks = seq(from = 0, to = 160, by = 10)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Butyrate (umol/g)", title = "Fecal butyrate (DW)"))
+        labs(x = "Weeks", y = "Butyrate (umol/g)", title = "Fecal butyrate (DW)",
+             color = ""))
 
 dw_propionate_lm <- c()
 dw_propionate_lm <- df_scfa %>% linearmixed(DW_PA_umolg)
@@ -180,10 +181,11 @@ dw_propionate_lm <- df_scfa %>% linearmixed(DW_PA_umolg)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(dw_propionate_lm, y.position = 150, label = "p_signif", 
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(0,240), breaks = seq(from = 0, to = 200, by = 50)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Propionate (umol/g)", title = "Fecal propionate (DW)"))
+        labs(x = "Weeks", y = "Propionate (umol/g)", title = "Fecal propionate (DW)", 
+                color = ""))
 
 dw_fa_lm <- c()
 dw_fa_lm <- df_scfa %>% linearmixed(DW_FA_umolg)
@@ -202,10 +204,11 @@ dw_fa_lm <- df_scfa %>% linearmixed(DW_FA_umolg)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(dw_fa_lm, y.position = 25, label = "p_signif", 
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(0,30), breaks = seq(from = 0, to = 30, by = 5)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Formic acid (umol/g)", title = "Fecal formic acid (DW)"))
+        labs(x = "Weeks", y = "Formic acid (umol/g)", title = "Fecal formic acid (DW)",
+    color = ""))
 
 
 
@@ -226,10 +229,11 @@ ww_acetate_lm <- df_scfa %>% linearmixed(WW_AA_umolg)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(ww_acetate_lm, y.position = 90, label = "p_signif", 
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(0,125), breaks = seq(from = 0, to = 120, by = 10)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Acetate (umol/g)", title = "Fecal acetate (WW)"))
+        labs(x = "Weeks", y = "Acetate (umol/g)", title = "Fecal acetate (WW)",
+    color = ""))
 
 ww_butyrate_lm <- c()
 ww_butyrate_lm <- df_scfa %>% linearmixed(WW_BA_umolg)
@@ -248,10 +252,11 @@ ww_butyrate_lm <- df_scfa %>% linearmixed(WW_BA_umolg)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(ww_butyrate_lm, y.position = 35, label = "p_signif", 
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(0,50), breaks = seq(from = 0, to = 50, by = 10)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Butyrate (umol/g)", title = "Fecal butyrate (WW)"))
+        labs(x = "Weeks", y = "Butyrate (umol/g)", title = "Fecal butyrate (WW)",
+             color = ""))
 
 ww_propionate_lm <- c()
 ww_propionate_lm <- df_scfa %>% linearmixed(WW_PA_umolg)
@@ -270,10 +275,11 @@ ww_propionate_lm <- df_scfa %>% linearmixed(WW_PA_umolg)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(ww_propionate_lm, y.position = 35, label = "p_signif", 
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(0,40), breaks = seq(from = 0, to = 40, by = 5)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Propionate (umol/g)", title = "Fecal propionate (WW)"))
+        labs(x = "Weeks", y = "Propionate (umol/g)", title = "Fecal propionate (WW)",
+             color = ""))
 
 ww_fa_lm <- c()
 ww_fa_lm <- df_scfa %>% linearmixed(WW_FA_umolg)
@@ -292,17 +298,26 @@ ww_fa_lm <- df_scfa %>% linearmixed(WW_FA_umolg)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(ww_fa_lm, y.position = 5, label = "p_signif", 
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(0,7), breaks = seq(from = 0, to = 7, by = 2)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Formic acid (umol/g)", title = "Fecal formic acid (WW)"))
+        labs(x = "Weeks", y = "Formic acid (umol/g)", title = "Fecal formic acid (WW)",
+             color = ""))
 
-ggarrange(plot_acetate, plot_butyrate, plot_propionate, plot_fa, nrow = 2, ncol = 2)
+ggarrange(plot_acetate, plot_butyrate, plot_propionate, plot_fa, 
+          nrow = 2, ncol = 2,
+          labels = c("A", "B", "C", "D"),
+          common.legend = TRUE,
+          legend = "bottom")
 ggsave(filename = "results/fecalscfa/fecalscfa_dryweightcorr_all.pdf", width = 8, height = 7)
 ggsave(filename = "results/fecalscfa/fecalscfa_dryweightcorr_all.svg", width = 8, height = 7)
 ggsave(filename = "results/fecalscfa/fecalscfa_dryweightcorr_all.png", width = 8, height = 7)
 
-ggarrange(plot_acetate_ww, plot_butyrate_ww, plot_propionate_ww, plot_fa_ww, nrow = 2, ncol = 2)
+ggarrange(plot_acetate_ww, plot_butyrate_ww, plot_propionate_ww, plot_fa_ww, 
+          nrow = 2, ncol = 2,
+          labels = c("A", "B", "C", "D"),
+          common.legend = TRUE,
+          legend = "bottom")
 ggsave(filename = "results/fecalscfa/fecalscfa_wetweightcorr_all.pdf", width = 8, height = 7)
 ggsave(filename = "results/fecalscfa/fecalscfa_wetweightcorr_all.svg", width = 8, height = 7)
 ggsave(filename = "results/fecalscfa/fecalscfa_wetweightcorr_all.png", width = 8, height = 7)

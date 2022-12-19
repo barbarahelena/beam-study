@@ -31,7 +31,7 @@ theme_Publication <- function(base_size=12, base_family="sans") {
                 panel.grid.major = element_line(colour="#f0f0f0"),
                 panel.grid.minor = element_blank(),
                 legend.key = element_rect(colour = NA),
-                legend.position = "right",
+                legend.position = "bottom",
                 # legend.direction = "horizontal",
                 legend.key.size= unit(0.2, "cm"),
                 legend.spacing  = unit(0, "cm"),
@@ -139,10 +139,11 @@ sodium_lm <- df_diet %>% linearmixed_diet(Sodium)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(energy_lm, y.position = 2800, label = "p_signif",
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(500,3000), breaks = seq(from = 500, to = 3000, by = 500)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Energy (kcal)", title = "Energy intake"))
+        labs(x = "Weeks", y = "Energy (kcal)", title = "Energy intake",
+             color = ""))
 
 (plot_fat <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 125),
@@ -158,10 +159,11 @@ sodium_lm <- df_diet %>% linearmixed_diet(Sodium)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(fat_lm, y.position = 100, label = "p_signif",
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(0,125), breaks = seq(from = 0, to = 125, by = 25)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Fat (g)", title = "Fat"))
+        labs(x = "Weeks", y = "Fat (g)", title = "Fat",
+             color = ""))
 
 (plot_satfat <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 75),
@@ -177,10 +179,11 @@ sodium_lm <- df_diet %>% linearmixed_diet(Sodium)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(satfat_lm, y.position = 60, label = "p_signif",
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(0,75), breaks = seq(from = 0, to = 75, by = 25)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Saturated fat (g)", title = "Saturated fat"))
+        labs(x = "Weeks", y = "Saturated fat (g)", title = "Saturated fat",
+             color = ""))
 
 (plot_protein <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 150),
@@ -196,10 +199,11 @@ sodium_lm <- df_diet %>% linearmixed_diet(Sodium)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(protein_lm, y.position = 140, label = "p_signif",
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(0,150), breaks = seq(from = 0, to = 150, by = 25)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Proteins (g)", title = "Proteins"))
+        labs(x = "Weeks", y = "Proteins (g)", title = "Proteins",
+             color = ""))
 
 (plot_fibers <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 60),
@@ -215,10 +219,11 @@ sodium_lm <- df_diet %>% linearmixed_diet(Sodium)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(fibers_lm, y.position = 50, label = "p_signif",
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(0,60), breaks = seq(from = 0, to = 60, by = 10)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Fibers (g)", title = "Fibers"))
+        labs(x = "Weeks", y = "Fibers (g)", title = "Fibers",
+             color = ""))
 
 (plot_sodium <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 6500),
@@ -234,15 +239,18 @@ sodium_lm <- df_diet %>% linearmixed_diet(Sodium)
                           color = Treatment_group), width=0.1) +
         stat_pvalue_manual(sodium_lm, y.position = 4000, label = "p_signif",
                            remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama(guide = "none") + 
+        scale_color_jama() + 
         scale_y_continuous(limits = c(0,6750), breaks = seq(from = 0, to = 6000, by = 1000)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Sodium (mg)", title = "Sodium"))
+        labs(x = "Weeks", y = "Sodium (mg)", title = "Sodium",
+             color = ""))
 
 
 (pl_diet <- ggarrange(plot_energy, plot_fat, plot_satfat, plot_protein, plot_fibers, plot_sodium, 
                      labels = c("A", "B", "C", "D", "E", "F"),
-                     nrow = 2, ncol = 3))
+                     nrow = 2, ncol = 3,
+                     common.legend = TRUE,
+                     legend = "bottom"))
 save_function_diet(pl_diet, "diet_plots", a = 9, b = 6)
 
 save_function_diet(plot_energy, "energy_diet")
