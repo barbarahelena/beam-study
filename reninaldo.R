@@ -125,7 +125,7 @@ df_means <- df_ra %>%
 
 #### Renin and aldosterone plots with LMMs ####
 renin_lm <- df_ra %>% linearmixed_reninaldo(logRenin)
-aldo_lm <- df_ra %>% linearmixed_reninaldo(logAldo)
+aldo_lm <- df_ra %>% linearmixed_reninaldo(Aldosterone)
 arr_lm <- df_ra %>% linearmixed_reninaldo(logARR)
 
 # (plot_renin <- ggplot() +
@@ -185,24 +185,24 @@ arr_lm <- df_ra %>% linearmixed_reninaldo(logARR)
         theme_Publication() +
         labs(x = "Weeks", y = "Log10 ARR", title = "Aldosterone-renin ratio", color = ""))
 
-(plot_logaldo <- ggplot() +
-        geom_rect(aes(xmin = 0, xmax = 4, ymin = 1.50, ymax = 2.50),
+(plot_aldo <- ggplot() +
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 80, ymax = 300),
                   fill = "#CDCDCD", alpha = 0.3) +
-        geom_line(data = df_means, aes(x = weeks, y = logAldo_mean, 
+        geom_line(data = df_means, aes(x = weeks, y = Aldosterone_mean, 
                                        color = Treatment_group, group = Treatment_group), alpha = 1) +
-        geom_line(data = df_ra, aes(x = weeks, y = logAldo,
+        geom_line(data = df_ra, aes(x = weeks, y = Aldosterone,
                                     color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = df_means,
-                      aes(ymin = logAldo_mean - (logAldo_sd/sqrt(logAldo_n)),
-                          ymax = logAldo_mean + (logAldo_sd/sqrt(logAldo_n)),
+                      aes(ymin = Aldosterone_mean - (Aldosterone_sd/sqrt(Aldosterone_n)),
+                          ymax = Aldosterone_mean + (Aldosterone_sd/sqrt(Aldosterone_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(aldo_lm, y.position = 2.50, label = "p_signif",
+        stat_pvalue_manual(aldo_lm, y.position = 250, label = "p_signif",
                            remove.bracket = TRUE, bracket.size = 0) +
         scale_color_jama() + 
-        scale_y_continuous(limits = c(1.50,2.50), breaks = seq(from = 1.50, to = 2.50, by = 0.25)) +
+        scale_y_continuous(limits = c(80,300), breaks = seq(from = 100, to = 300, by = 50)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Log10 aldosterone (pg/ml)", title = "Aldosterone", color = ""))
+        labs(x = "Weeks", y = "Aldosterone (pg/ml)", title = "Aldosterone", color = ""))
 
 # (plot_arr <- ggplot() +
 #         # geom_rect(aes(xmin = 0, xmax = 4, ymin = 18, ymax = 30),
@@ -224,7 +224,7 @@ arr_lm <- df_ra %>% linearmixed_reninaldo(logARR)
 #         labs(x = "Weeks", y = "ARR", title = "ARR"))
 
 
-(pl_reninaldo <- ggarrange(plot_logrenin, plot_logaldo, plot_logarr,
+(pl_reninaldo <- ggarrange(plot_logrenin, plot_aldo, plot_logarr,
                      labels = c("A", "B", "C"),
                      nrow = 1, ncol = 3,
                      common.legend = TRUE,
@@ -232,7 +232,7 @@ arr_lm <- df_ra %>% linearmixed_reninaldo(logARR)
 save_function_reninaldo(pl_reninaldo, "reninaldo_plots", a = 9, b = 3)
 
 save_function_reninaldo(plot_logrenin, "logrenin")
-save_function_reninaldo(plot_logaldo, "logaldo")
+save_function_reninaldo(plot_aldo, "aldo")
 save_function_reninaldo(plot_logarr, "logarr")
 
 
@@ -250,8 +250,8 @@ reninaldo_boxplots <- df_ra %>%
         geom_boxplot(aes(fill = Treatment_group), outlier.shape = NA) +
         geom_point(size = 0.75)+
         geom_line(aes(color = Treatment_group, group = ID), alpha = 0.2) +
-        # stat_compare_means(method = "t.test", label = "p.signif",
-        #                    comparisons = list(c("Before", "Treatment"), c("Treatment", "After"))) +
+        stat_compare_means(method = "wilcox.test", label = "p.signif", paired = TRUE,
+                           comparisons = list(c("Before", "Treatment"), c("Treatment", "After"))) +
         facet_wrap(~Treatment_group) + 
         scale_fill_jama(guide = "none") +
         scale_color_jama(guide = "none") +
@@ -264,9 +264,9 @@ save_function_reninaldo(boxplot_aldo, "boxplot_aldo", b = 5)
         geom_boxplot(aes(fill = Treatment_group), outlier.shape = NA) +
         geom_point(size = 0.75)+
         geom_line(aes(color = Treatment_group, group = ID), alpha = 0.2) +
-        # stat_compare_means(method = "wilcox.test", label = "p.signif",
-        #                    comparisons = list(c("Before", "Treatment"), 
-        #                                       c("Treatment", "After"))) +
+        stat_compare_means(method = "wilcox.test", label = "p.signif", paired = TRUE,
+                           comparisons = list(c("Before", "Treatment"),
+                                              c("Treatment", "After"))) +
         facet_wrap(~Treatment_group) + 
         scale_fill_jama(guide = "none") +
         scale_color_jama(guide = "none") +
@@ -279,8 +279,8 @@ save_function_reninaldo(boxplot_renin, "boxplot_renin", b = 5)
         geom_boxplot(aes(fill = Treatment_group), outlier.shape = NA) +
         geom_point(size = 0.75)+
         geom_line(aes(color = Treatment_group, group = ID), alpha = 0.2) +
-        # stat_compare_means(method = "wilcox.test", label = "p.signif",
-        #                    comparisons = list(c("Before", "Treatment"), c("Treatment", "After"))) +
+        stat_compare_means(method = "wilcox.test", label = "p.signif", paired = TRUE,
+                           comparisons = list(c("Before", "Treatment"), c("Treatment", "After"))) +
         facet_wrap(~Treatment_group) + 
         scale_fill_jama(guide = "none") +
         scale_color_jama(guide = "none") +
@@ -291,4 +291,4 @@ save_function_reninaldo(boxplot_arr, "boxplot_arr", b = 5)
 
 boxplots_reninaldo <- ggarrange(boxplot_renin, boxplot_aldo, boxplot_arr,
                                 nrow = 1, ncol = 3, labels = c("A", "B", "C")) 
-save_function_reninaldo(boxplots_reninaldo, "boxplots_reninaldo_nosig", a = 10, b = 4)
+save_function_reninaldo(boxplots_reninaldo, "boxplots_reninaldo_sig", a = 10, b = 4)
