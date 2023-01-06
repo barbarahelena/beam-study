@@ -43,4 +43,5 @@ table1 <- df_total %>%
     print()
 write.csv2(table1, "results/table1.csv")
 
-
+tab <- df %>% select(ID, Treatment_group)
+write.csv2(tab, "data/randomisation.csv")
