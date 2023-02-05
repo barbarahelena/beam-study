@@ -236,13 +236,14 @@ save_function_reninaldo(plot_logrenin, "logrenin")
 save_function_reninaldo(plot_aldo, "aldo")
 save_function_reninaldo(plot_logarr, "logarr")
 
-pl_mechanisms <- ggarrange(plot_logrenin, plot_aldo, plot_logarr,
-                           plot_fena, plot_brs, plot_sdnn, 
-                           labels = c("A", "B", "C", "D", "E", "F"), 
+pl_mechanisms <- ggarrange(plot_brs, plot_sdnn, plot_dpdt,
+                           plot_logrenin, plot_aldo, plot_logarr,
+                           plot_fena, plot_tbwp, plot_ebwp,
+                           labels = c("A", "B", "C", "D", "E", "F", "G", "H", "I"), 
                            common.legend = TRUE,
                            legend = "bottom")
 pl_mechanisms
-save_function_reninaldo(pl_mechanisms, "aldorenin_hrvbrs_fena", a = 14, b = 8)
+save_function_reninaldo(pl_mechanisms, "nexfin_aldorenin_fena_bia", a = 14, b = 12)
 
 #### Boxplots ####
 reninaldo_boxplots <- df_ra %>% 

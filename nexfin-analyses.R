@@ -90,11 +90,14 @@ save_function_nexfin <- function(plot, name, width = 5, height = 4){
 #### Data ####
 df <- readRDS("data/demographics_BEAM.RDS")
 nexfin <- readRDS("data/nexfin_data.RDS") 
-bia <- readRDS("data/bia_data.RDS") %>% select(ID, visit, BMI)
+bia <- readRDS("data/bia_data.RDS") %>% 
+    dplyr::select(ID, visit, BMI)
 lab <- readRDS("data/lab_results.RDS") %>% 
-    select(ID, visit, GFR, Na, K, Kreat, UrineSodium, UrineK, UrineCreat)
-officebp <- readRDS("data/officebp_summary.RDS") %>% select(ID, visit, Systolic, Diastolic)
-dietarydata <- readRDS("data/diet_summary.RDS") %>% select(ID, visit, Sodium, Fibers)
+    dplyr::select(ID, visit, GFR, Na, K, Kreat, UrineSodium, UrineK, UrineCreat)
+officebp <- readRDS("data/officebp_summary.RDS") %>% 
+    dplyr::select(ID, visit, Systolic, Diastolic)
+dietarydata <- readRDS("data/diet_summary.RDS") %>% 
+    dplyr::select(ID, visit, Sodium, Fibers)
 covariates <- right_join(bia, dietarydata, by = c("ID", "visit")) %>% 
     right_join(officebp, ., by = c("ID", "visit")) %>% 
     right_join(df, ., by = c("ID")) %>% 
@@ -142,6 +145,7 @@ dpdt_lmm <- linearmixed_nexfin(nexfin_total, dPdt)
 sdnn_lmm <- linearmixed_nexfin(nexfin_total, SDNN)
 pnn50_lmm <- linearmixed_nexfin(nexfin_total, pNN50)
 dpdt_lmm <- linearmixed_nexfin(nexfin_total, dPdt)
+svr_lmm <- linearmixed_nexfin(nexfin_total, SVR)
 rmsdd_lmm <- linearmixed_nexfin(nexfin_total, RMSDD)
 brs_lmm <- linearmixed_nexfin(nexfin_total, meanBRS)
 
@@ -157,7 +161,7 @@ brs_lmm <- linearmixed_nexfin(nexfin_total, meanBRS)
                           ymax = SBP_mean + (SBP_sd/sqrt(SBP_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(sbp_lmm, y.position = 170, label =  "p = {pval}", 
+        stat_pvalue_manual(sbp_lmm, y.position = 170, label =  "{pval}", 
                            remove.bracket = TRUE, bracket.size = 0) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(100, 200), breaks = seq(from = 100, to = 200, by = 10)) +
@@ -177,7 +181,7 @@ brs_lmm <- linearmixed_nexfin(nexfin_total, meanBRS)
                           ymax = DBP_mean + (DBP_sd/sqrt(DBP_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(dbp_lmm, y.position = 90, label =  "p = {pval}", 
+        stat_pvalue_manual(dbp_lmm, y.position = 90, label =  "{pval}", 
                            remove.bracket = TRUE, bracket.size = 0) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(55, 100), breaks = seq(from = 55, to = 100, by = 5)) +
@@ -218,12 +222,12 @@ brs_lmm <- linearmixed_nexfin(nexfin_total, meanBRS)
                           ymax = dPdt_mean + (dPdt_sd/sqrt(MAP_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(dpdt_lmm, y.position = 2000, label = "p = {pval}", 
+        stat_pvalue_manual(dpdt_lmm, y.position = 2000, label = "{pval}", 
                            remove.bracket = TRUE, bracket.size = 0) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(0,3000), breaks = seq(from = 0, to = 3000, by = 500)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "dPdt", title = "dPdt",
+        labs(x = "Weeks", y = "dP/dt", title = "Left ventricular contractility",
              color = ""))
 
 (plot_pnn50<- ggplot() +
@@ -238,7 +242,7 @@ brs_lmm <- linearmixed_nexfin(nexfin_total, meanBRS)
                           ymax = pNN50_mean + (pNN50_sd/sqrt(pNN50_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(pnn50_lmm, y.position = 0.2, label = "p = {pval}", 
+        stat_pvalue_manual(pnn50_lmm, y.position = 0.2, label = "{pval}", 
                            remove.bracket = TRUE, bracket.size = 0) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(0,0.3), breaks = seq(from = 0, to = 0.3, by = 0.1)) +
@@ -296,8 +300,9 @@ save_function_nexfin(pl_nexfin, "nexfin_plots", width = 9, height = 6)
 save_function_nexfin(plot_sbp, "sbp_nexfin")
 save_function_nexfin(plot_dbp, "dbp_nexfin")
 save_function_nexfin(plot_co, "co_nexfin")
-save_function_nexfin(plot_co, "dpdt_nexfin")
-save_function_nexfin(plot_co, "brs_nexfin")
+save_function_nexfin(plot_dpdt, "dpdt_nexfin")
+save_function_nexfin(plot_brs, "brs_nexfin")
 save_function_nexfin(plot_sdnn, "sdnn_nexfin")
 save_function_nexfin(plot_pnn50, "pnn50_nexfin")
 save_function_nexfin(plot_rmsdd, "rmsdd_nexfin")
+

@@ -120,12 +120,15 @@ save_function <- function(plot, name, width = 5, height = 4){
 
 #### Data ####
 df <- readRDS("data/demographics_BEAM.RDS")
-bia <- readRDS("data/bia_data.RDS") %>% select(ID, visit, BMI)
+bia <- readRDS("data/bia_data.RDS") %>% dplyr::select(ID, visit, BMI)
 lab <- readRDS("data/lab_results.RDS")  %>% 
     dplyr::select(ID, visit, GFR, Na, K, Kreat, UrineSodium, UrineK, UrineCreat)
-officebp <- readRDS("data/officebp_summary.RDS") %>% select(ID, visit, Systolic, Diastolic)
-urinedata <- readRDS("data/urinesamples.RDS") %>% select(ID, visit, Volume)
-dietarydata <- readRDS("data/diet_summary.RDS") %>% select(ID, visit, Sodium, Fibers)
+officebp <- readRDS("data/officebp_summary.RDS") %>% 
+    dplyr::select(ID, visit, Systolic, Diastolic)
+urinedata <- readRDS("data/urinesamples.RDS") %>% 
+    dplyr::select(ID, visit, Volume)
+dietarydata <- readRDS("data/diet_summary.RDS") %>% 
+    dplyr::select(ID, visit, Sodium, Fibers)
 covariates <- right_join(bia, dietarydata, by = c("ID", "visit")) %>% 
     right_join(officebp, ., by = c("ID", "visit")) %>% 
     right_join(df, ., by = c("ID")) %>% 
