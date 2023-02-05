@@ -277,3 +277,4 @@ p3 <- dx %>%
     facet_wrap(~Treatment_group)
 p3
 save_function(p3, "composition_genus", width = 7, height = 7)
+
