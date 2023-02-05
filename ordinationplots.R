@@ -189,7 +189,7 @@ dfpc <- left_join(dfpc, clindf, by = 'sampleID')
 pl <- dfpc %>% 
     ggplot(aes(Axis.1, Axis.2)) +
     scale_fill_nejm() +
-    geom_point(aes(color = Treatment_group, shape = visit), size = 2) +
+    geom_point(aes(color = Treatment_group, shape = before_after), size = 2) +
     xlab(paste0('PCo1 (', round(expl_variance[1], digits = 1),'%)')) +
     ylab(paste0('PCo2 (', round(expl_variance[2], digits = 1),'%)')) +
     theme_Publication() +
@@ -217,13 +217,14 @@ ggsave("results/16S/PCoA_WeightedUnifrac_Visit.pdf", device = "pdf", width = 6, 
 pl <- dfpc %>% 
     ggplot(aes(Axis.1, Axis.2)) +
     scale_fill_nejm() +
-    geom_point(aes(color = visit), size = 2) +
+    geom_point(aes(color = before_after), size = 2) +
     xlab(paste0('PCo1 (', round(expl_variance[1], digits = 1),'%)')) +
     ylab(paste0('PCo2 (', round(expl_variance[2], digits = 1),'%)')) +
+    labs(color = "") +
     theme_Publication() +
     scale_color_lancet() +
     guides(fill = guide_legend(override.aes = list(shape = 21, size = 2))) +
-    stat_ellipse(aes(color = visit), type = "norm") +
+    stat_ellipse(aes(color = before_after), type = "norm") +
     facet_wrap(~Treatment_group) + 
     ggtitle("Beta diversity: weighted UniFrac")
 #guides(shape = guide_legend(override.aes = list(size = 4)))
@@ -489,5 +490,8 @@ faith_means <- dffai %>%
 save_function(plot_faith, "faith_pd_lmm")
 
 ggarrange(p3, pl, pl4, labels = c("A", "B", "C"))
-ggsave("results/descriptives.pdf", device = "pdf", width = 12, height = 10)
-ggsave("results/descriptives.svg", device = "svg", width = 12, height = 10)
+
+
+compalphabeta <- ggarrange(p3, pl, pl4, faithviolin, labels = c("A", "B", "C", "D"))
+save_function(compalphabeta, "compalphabeta_violin", width = 12, height = 11)
+
