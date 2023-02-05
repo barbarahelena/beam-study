@@ -90,7 +90,7 @@ df <- readRDS("data/demographics_BEAM.RDS")
 bia <- readRDS("data/bia_data.RDS")
 # lab <- readRDS("data/lab_results.RDS") %>% 
 #     select(ID, visit, GFR, LDL, CRP, UrineSodium, contains("DW"), contains("WW"))
-urinedata <- readRDS("data/urinesamples.RDS") %>% select(ID, visit, Volume)
+urinedata <- readRDS("data/urinesamples.RDS") %>% dplyr::select(ID, visit, Volume)
 # dietarydata <- readRDS("data/diet_summary.RDS") %>% select(ID, visit, Sodium, Fibers)
 covariates <- right_join(urinedata, df, by = "ID")
 
@@ -105,7 +105,6 @@ df_bia <- right_join(bia, covariates, by = c("ID", "visit")) %>%
                visit == "V5" ~ paste0(5)
            ),
            weeks = as.numeric(weeks),
-           Weight = BMI * (V1_Height / 100)^2,
            ECW = case_when(
                Sex == "Male" ~ (4.8) + (0.225* (V1_Height/100)^2)/(Imp5),
                 Sex == "Female" ~ (1.7) + (0.2*(V1_Height/100)^2)/(Imp5)+(0.057*Weight)
@@ -119,13 +118,14 @@ df_means <- df_bia %>%
     group_by(Treatment_group, weeks) %>% 
     summarise(across(c("Fatmass", "Fatperc", "Leanmass", "Leanperc", "DryLean",
                        "TBW", "TBWperc", "BMR", "BMI", "BFMI", "FFMI", "ECW", "ICW",
-                       "ECWperc", "ICWperc"), 
+                       "ECWperc", "ICWperc", "Weight"), 
                      list(mean = ~mean(.x, na.rm = TRUE),
                           sd = ~sd(.x, na.rm = TRUE),
                           n = ~length(.x)
                      ), .names = "{.col}_{.fn}"))
 
 #### BIA plots with LMMs ####
+weight_lm <- df_bia %>% linearmixed_bia(Weight)
 bmi_lm <- df_bia %>% linearmixed_bia(BMI)
 ffmi_lm <- df_bia %>% linearmixed_bia(FFMI)
 fmi_lm <- df_bia %>% linearmixed_bia(BFMI)
@@ -139,6 +139,25 @@ ecw_lm <- df_bia %>% linearmixed_bia(ECW)
 icw_lm <- df_bia %>% linearmixed_bia(ICW)
 ecwp_lm <- df_bia %>% linearmixed_bia(ECWperc)
 icwp_lm <- df_bia %>% linearmixed_bia(ICWperc)
+
+(plot_weight <- ggplot() +
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 18, ymax = 30),
+                  fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_means, aes(x = weeks, y = Weight_mean, 
+                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
+        geom_line(data = df_bia, aes(x = weeks, y = Weight,
+                                     color = Treatment_group, group = ID), alpha = 0.2) +
+        geom_errorbar(data = df_means,
+                      aes(ymin = Weight_mean - (Weight_sd/sqrt(Weight_n)),
+                          ymax = Weight_mean + (Weight_sd/sqrt(Weight_n)),
+                          x = weeks,
+                          color = Treatment_group), width=0.1) +
+        stat_pvalue_manual(bmi_lm, y.position = 28, label = "p_signif",
+                           remove.bracket = TRUE, bracket.size = 0) +
+        scale_color_jama() + 
+        scale_y_continuous(limits = c(50, 105), breaks = seq(from = 50, to = 120, by = 10)) +
+        theme_Publication() +
+        labs(x = "Weeks", y = "Weight (kg)", title = "Weight", color = ""))
 
 (plot_bmi <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 18, ymax = 30),
@@ -276,7 +295,27 @@ icwp_lm <- df_bia %>% linearmixed_bia(ICWperc)
         labs(x = "Weeks", y = "Extracellular body water (%)", 
              title = "Extracellular body water", color = ""))
 
-(pl_bia <- ggarrange(plot_bmi, plot_ffmi, plot_fmi, plot_fatp, plot_tbwp, plot_ebwp, 
+(plot_ibwp <- ggplot() +
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 80, ymax = 95),
+                  fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_means, aes(x = weeks, y = ICWperc_mean, 
+                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
+        geom_line(data = df_bia, aes(x = weeks, y = ICWperc,
+                                     color = Treatment_group, group = ID), alpha = 0.2) +
+        geom_errorbar(data = df_means,
+                      aes(ymin = ICWperc_mean - (ICWperc_sd/sqrt(ICWperc_n)),
+                          ymax = ICWperc_mean + (ICWperc_sd/sqrt(ICWperc_n)),
+                          x = weeks,
+                          color = Treatment_group), width=0.1) +
+        stat_pvalue_manual(icw_lm, y.position = 17.5, label = "p_signif", 
+                           remove.bracket = TRUE, bracket.size = 0) +
+        scale_color_jama() + 
+        scale_y_continuous(limits = c(80,95), breaks = seq(from = 80, to = 95, by = 5)) +
+        theme_Publication() +
+        labs(x = "Weeks", y = "Intracellular body water (%)", 
+             title = "Intracellular body water", color = ""))
+
+(pl_bia <- ggarrange(plot_bmi, plot_ffmi, plot_fmi, plot_fatp, plot_tbwp, plot_ebwp,
                         labels = c("A", "B", "C", "D", "E", "F"),
                         nrow = 2, ncol = 3, common.legend = TRUE,
                      legend = "bottom")
@@ -289,4 +328,5 @@ save_function_bia(plot_fmi, "fmi_bia")
 save_function_bia(plot_fatp, "fatp_bia")
 save_function_bia(plot_tbwp, "tbwp_bia")
 save_function_bia(plot_ebwp, "ecw_bia")
+save_function_bia(plot_ibwp, "icw_bia")
 save_function_bia(plot_drylean, "drylean_bia")
