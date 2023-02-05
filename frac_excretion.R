@@ -121,8 +121,8 @@ save_function <- function(plot, name, width = 5, height = 4){
 #### Data ####
 df <- readRDS("data/demographics_BEAM.RDS")
 bia <- readRDS("data/bia_data.RDS") %>% select(ID, visit, BMI)
-lab <- readRDS("data/lab_results.RDS") %>% 
-    select(ID, visit, GFR, Na, K, Kreat, UrineSodium, UrineK, UrineCreat)
+lab <- readRDS("data/lab_results.RDS")  %>% 
+    dplyr::select(ID, visit, GFR, Na, K, Kreat, UrineSodium, UrineK, UrineCreat)
 officebp <- readRDS("data/officebp_summary.RDS") %>% select(ID, visit, Systolic, Diastolic)
 urinedata <- readRDS("data/urinesamples.RDS") %>% select(ID, visit, Volume)
 dietarydata <- readRDS("data/diet_summary.RDS") %>% select(ID, visit, Sodium, Fibers)
@@ -185,7 +185,7 @@ plot(urine_total$FENa, urine_total$Creatclearance)
 
 #### Calculating means ####
 urine_means <- urine_total %>% 
-    select(ID, FENa, FEK, Creatclearance, Urine_Na_L, Urine_Kreat_L, GFR, Na,
+    dplyr::select(ID, FENa, FEK, Creatclearance, Urine_Na_L, Urine_Kreat_L, GFR, Na,
            weeks, Treatment_group) %>% 
     group_by(Treatment_group, weeks) %>% 
     summarise(across(c(FENa, FEK, Creatclearance, Urine_Na_L, Urine_Kreat_L, GFR, Na), 
