@@ -104,7 +104,8 @@ df_scfa <- right_join(df, lab, by = "ID") %>%
                visit == "V4" ~ paste0(4),
                visit == "V5" ~ paste0(5)
            ),
-           weeks = as.numeric(weeks)) %>% 
+           weeks = as.numeric(weeks),
+           Total_SCFA_DW = DW_AA_umolg + DW_BA_umolg + DW_PA_umolg + DW_FA_umolg) %>% 
     #filter(ID != "BEAM_573") %>% # exclude beam_573 because off chart conc at V2
     droplevels(.) 
 
@@ -119,6 +120,29 @@ df_means <- df_scfa %>%
                  .names = "{.col}_{.fn}"))
 
 #### SCFA plots with LMMs ####
+dw_totalscfa_lm <- c()
+dw_totalscfa_lm <- df_scfa %>% linearmixed(Total_SCFA_DW)
+
+(plot_total <- ggplot() +
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 750),
+                  fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_means, aes(x = weeks, y = Total_SCFA_DW_mean, 
+                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
+        geom_line(data = df_scfa, aes(x = weeks, y = Total_SCFA_DW,
+                                      color = Treatment_group, group = ID), alpha = 0.2) +
+        geom_errorbar(data = df_means,
+                      aes(ymin = Total_SCFA_DW_mean - (Total_SCFA_DW_sd/sqrt(Total_SCFA_DW_n)),
+                          ymax = Total_SCFA_DW_mean + (Total_SCFA_DW_sd/sqrt(Total_SCFA_DW_n)),
+                          x = weeks,
+                          color = Treatment_group), width=0.1) +
+        stat_pvalue_manual(dw_acetate_lm, y.position = 300, label = "p_signif", 
+                           remove.bracket = TRUE, bracket.size = 0) +
+        scale_color_jama() + 
+        scale_y_continuous(limits = c(0,750), breaks = seq(from = 0, to = 750, by = 50)) +
+        theme_Publication() +
+        labs(x = "Weeks", y = "SCFA (umol/g)", title = "Fecal acetate (DW)", color = ""))
+
+
 dw_acetate_lm <- c()
 dw_acetate_lm <- df_scfa %>% linearmixed(DW_AA_umolg)
 
