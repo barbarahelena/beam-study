@@ -73,6 +73,8 @@ linearmixed_nexfin <- function(data, var){
         statres$pval < 0.001 ~paste0("***"),
         statres$pval > 0.05 ~paste0("")
     )
+    statres$pval <- case_when(statres$pval < 0.1 ~ paste0(str_c("p = ", statres$pval)),
+                              statres$pval > 0.1 ~ paste0(""))
     return(statres)
 }
 
@@ -121,7 +123,7 @@ nexfin_total <- nexfin_total %>%
     before_after = fct_relevel(before_after, "After", after = 2L))
 
 nexfin_means <- nexfin_total %>% 
-    select(ID, MAP, SBP, DBP, SV, CO, SVR, meanBRS, SDNN, RMSDD, NN50, pNN50, dPdt,
+    select(ID, MAP, SBP, DBP, AvgRR, SV, CO, SVR, meanBRS, SDNN, RMSDD, NN50, pNN50, dPdt,
            weeks, Treatment_group) %>% 
     group_by(Treatment_group, weeks) %>% 
     summarise(across(c(MAP, SBP, DBP, SV, CO, SVR, meanBRS, SDNN, RMSDD, NN50, pNN50, dPdt), 
@@ -256,7 +258,7 @@ brs_lmm <- linearmixed_nexfin(nexfin_total, meanBRS)
                           ymax = SDNN_mean + (SDNN_sd/sqrt(SDNN_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(sdnn_lmm, y.position = 0.08, label = "p = {pval}",
+        stat_pvalue_manual(sdnn_lmm, y.position = 0.08, label = "{pval}",
                            remove.bracket = TRUE) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(0,0.10), breaks = seq(from = 0, to = 0.10, by = 0.02)) +
@@ -276,7 +278,7 @@ brs_lmm <- linearmixed_nexfin(nexfin_total, meanBRS)
                           ymax = meanBRS_mean + (meanBRS_sd/sqrt(meanBRS_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(brs_lmm, y.position = 13, label = "p = {pval}",
+        stat_pvalue_manual(brs_lmm, y.position = 13, label = "{pval}",
                            remove.bracket = TRUE) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(0,16), breaks = seq(from = 0, to = 16, by = 2)) +
