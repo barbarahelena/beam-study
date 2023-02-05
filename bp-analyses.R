@@ -58,7 +58,7 @@ linearmixed <- function(data, var){
     data2 <- data %>%
         filter(weeks %in% c(4,5)) %>% 
         mutate(var = {{ var }})
-    model1_v5 <- lmer(var ~ Treatment_group*weeks + (1|ID),
+    model1_v5 <- lmer(var ~ Treatment_group*visit + (1|ID),
                       data = data2)
     res_v5 <- summary(model1_v5)
     print(res_v5)
@@ -114,11 +114,11 @@ save_function_bp <- function(plot, group, name, width = 5, height = 4){
 
 # Data
 df <- readRDS("data/demographics_BEAM.RDS")
-bia <- readRDS("data/bia_data.RDS") %>% select(ID, visit, BMI)
+bia <- readRDS("data/bia_data.RDS") %>% dplyr::select(ID, visit, BMI)
 lab <- readRDS("data/lab_results.RDS") %>% 
-    select(ID, visit, GFR, LDL, CRP, UrineSodium)
-urinedata <- readRDS("data/urinesamples.RDS") %>% select(ID, visit, Volume)
-dietarydata <- readRDS("data/diet_summary.RDS") %>% select(ID, visit, Sodium)
+    dplyr::select(ID, visit, GFR, LDL, CRP, UrineSodium)
+urinedata <- readRDS("data/urinesamples.RDS") %>% dplyr::select(ID, visit, Volume)
+dietarydata <- readRDS("data/diet_summary.RDS") %>% dplyr::select(ID, visit, Sodium)
 officebp <- readRDS("data/officebp_summary.RDS")
 homebp <- readRDS("data/homebp_perweek_BEAM.RDS")
 abpm <- readRDS("data/abpm_total.RDS")
@@ -141,9 +141,10 @@ df_total <- right_join(abpm, right_join(covariates, df, by = "ID"), by= c("ID", 
     droplevels(.) 
 
 df_means <- df_total %>% 
-    select(ID, Total_systolic_Mean, Total_diastolic_Mean,
-           Awake_systolic_Mean, Awake_diastolic_Mean,
-           Asleep_systolic_Mean, Asleep_diastolic_Mean, weeks, Treatment_group) %>% 
+    dplyr::select(ID, Total_systolic_Mean, Total_diastolic_Mean, Total_HR_Mean,
+           Awake_systolic_Mean, Awake_diastolic_Mean, Awake_HR_Mean,
+           Asleep_systolic_Mean, Asleep_diastolic_Mean, Asleep_HR_Mean,
+           weeks, Treatment_group) %>% 
     group_by(Treatment_group, weeks) %>% 
     summarise(across(contains("Mean"), list(mean = mean, sd = sd), .names = "{.col}_{.fn}"))
 
@@ -285,17 +286,95 @@ asldia_lm <- c()
         labs(x = "Weeks", y = "Diastolic BP (mmHg)", title = "Nighttime diastolic BP", 
              color = "Treatment"))
 
-(plot_total <- ggarrange(plota, plotb, plotc, plotd, plote, plotf, 
-                         nrow = 2, ncol = 3, 
-                         labels = c("A", "B", "C", "D", "E", "F"),
-                         common.legend = TRUE, legend = "bottom"))
-save_function_bp(plot_total, group = "abpm", name = "abpm_lineplots_lmm", width = 10, height = 8)
 
-plot_emphasis <- ((plotb / plote ) | 
-    ((plota | plotc) / (plotd | plotf)) & theme(legend.position = "bottom")) + 
-    plot_layout(guides = "collect")
-save_function_bp(plot_emphasis, group = "abpm", name = "abpm_lineplots_emphasis", 
-                 width = 10, height = 8)
+totp_lm <- c()
+(totp_lm <- df_total %>% linearmixed(Total_HR_Mean))
+
+(plotg <- ggplot() +
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 45, ymax = 85), 
+                  fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_means, aes(x = weeks, y = Total_HR_Mean_mean, 
+                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
+        geom_line(data = df_total, aes(x = weeks, y = Total_HR_Mean,
+                                       color = Treatment_group, group = ID), alpha = 0.2) +
+        geom_errorbar(data = df_means,
+                      aes(ymin = Total_HR_Mean_mean - (Total_HR_Mean_sd/sqrt(11)),
+                          ymax = Total_HR_Mean_mean + (Total_HR_Mean_sd/sqrt(11)),
+                          x = weeks,
+                          color = Treatment_group), width=0.1) +
+        stat_pvalue_manual(totp_lm, y.position = 82, label = "p_signif", 
+                           remove.bracket = TRUE, bracket.size = 0) +
+        scale_color_jama() + 
+        scale_y_continuous(limits = c(45,85), breaks = seq(from = 45, to = 85, by = 5)) +
+        theme_Publication() +
+        labs(x = "Weeks", y = "Heart rate (/min)", title = "Total heart rate", 
+             color = "Treatment"))
+
+awp_lm <- c()
+(awp_lm <- df_total %>% linearmixed(Awake_HR_Mean))
+
+(ploth <- ggplot() +
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 45, ymax = 85), 
+                  fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_means, aes(x = weeks, y = Awake_HR_Mean_mean, 
+                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
+        geom_line(data = df_total, aes(x = weeks, y = Awake_HR_Mean,
+                                       color = Treatment_group, group = ID), alpha = 0.2) +
+        geom_errorbar(data = df_means,
+                      aes(ymin = Awake_HR_Mean_mean - (Awake_HR_Mean_sd/sqrt(11)),
+                          ymax = Awake_HR_Mean_mean + (Awake_HR_Mean_sd/sqrt(11)),
+                          x = weeks,
+                          color = Treatment_group), width=0.1) +
+        stat_pvalue_manual(awp_lm, y.position = 82, label = "p_signif", 
+                           remove.bracket = TRUE) +
+        scale_color_jama() + 
+        scale_y_continuous(limits = c(45,85), breaks = seq(from = 45, to = 85, by = 5)) +
+        theme_Publication() +
+        labs(x = "Weeks", y = "Heart (/min)", title = "Daytime heart rate", 
+             color = "Treatment"))
+
+aslp_lm <- c()
+(aslp_lm <- df_total %>% linearmixed(Asleep_HR_Mean))
+
+(ploti <- ggplot() +
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 45, ymax = 85), 
+                  fill = "#CDCDCD", alpha = 0.4) +
+        geom_line(data = df_means, aes(x = weeks, y = Asleep_HR_Mean_mean, 
+                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
+        geom_line(data = df_total, aes(x = weeks, y = Asleep_HR_Mean,
+                                       color = Treatment_group, group = ID), alpha = 0.2) +
+        geom_errorbar(data = df_means,
+                      aes(ymin = Asleep_HR_Mean_mean - (Asleep_HR_Mean_sd/sqrt(11)),
+                          ymax = Asleep_HR_Mean_mean + (Asleep_HR_Mean_sd/sqrt(11)),
+                          x = weeks,
+                          color = Treatment_group), width=0.1) +
+        stat_pvalue_manual(aslp_lm, y.position = 82, label = "p_signif", 
+                           hide.ns = TRUE, remove.bracket = TRUE) +
+        scale_color_jama() + 
+        scale_y_continuous(limits = c(45,85), breaks = seq(from = 45, to = 85, by = 5)) +
+        theme_Publication() +
+        labs(x = "Weeks", y = "Heart rate (/min)", title = "Nighttime heart rate", 
+             color = "Treatment"))
+
+
+(plot_total <- ggarrange(plota, plotb, plotc, plotd, plote, plotf, 
+                         plotg, ploth, ploti,
+                         nrow = 3, ncol = 3, 
+                         labels = c("A", "B", "C", "D", "E", "F", "G", "H", "I"),
+                         common.legend = TRUE, legend = "bottom"))
+save_function_bp(plot_total, group = "abpm", name = "abpm_lineplots_lmm", width = 11, height = 12)
+
+plot_pulse <- ggarrange(plotg, ploth, ploti, labels = c("A", "B", "C"), 
+                        common.legend = TRUE,
+                        nrow = 1,
+                        legend = "bottom")
+save_function_bp(plot_pulse, group = "abpm", name = "abpm_pulse", width = 9, height = 4)
+
+# plot_emphasis <- ((plotb / plote ) | 
+#     ((plota | plotc) / (plotd | plotf)) & theme(legend.position = "bottom")) + 
+#     plot_layout(guides = "collect")
+# save_function_bp(plot_emphasis, group = "abpm", name = "abpm_lineplots_emphasis", 
+#                  width = 10, height = 8)
 
 save_function_bp(plota, group = "abpm", name = "total_sbp_lmm")
 save_function_bp(plotb, group = "abpm", name = "day_sbp_lmm")
