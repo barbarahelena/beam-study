@@ -47,32 +47,41 @@ linearmixed_abpm_cov <- function(data, var){
     data1 <- data %>% filter(weeks %in% c(0,4)) %>% 
         mutate(var = {{ var }})
     ## Model 0
-    model0 <- lmer(var ~ (1|ID) + Treatment_group*weeks, 
+    model0 <- lmer(var ~ (1|ID) + Treatment_group*visit, 
                       data = data1)
     res0 <- summary(model0)
+    confint_model0 <- confint(model0)
     print(res0)
     estimate <- as.numeric(format(round(res0$coefficients[4,1], 3), nsmall = 3))
     stderr <- as.numeric(format(round(res0$coefficients[4,2], 3), nsmall = 3))
+    conflow <- as.numeric(format(round(confint_model0[6,1], 3), nsmall = 3))
+    confhigh <- as.numeric(format(round(confint_model0[6,2], 3), nsmall = 3))
     pval <- as.numeric(format(round(res0$coefficients[4,5], 3), nsmall = 3))
-    statres_line1 <- cbind(model = "model0", estimate, stderr, pval)
+    statres_line1 <- cbind(model = "model0", estimate, conflow, confhigh, stderr, pval)
     ## Model 1
-    model1 <- lmer(var ~ (1|ID) + Age + Sex + BMI + Treatment_group*weeks, 
+    model1 <- lmer(var ~ (1|ID) + Age + Sex + BMI + Treatment_group*visit, 
                    data = data1)
     res1 <- summary(model1)
+    confint_model1 <- confint(model1)
     print(res1)
     estimate <- as.numeric(format(round(res1$coefficients[7,1], 3), nsmall = 3))
+    conflow <- as.numeric(format(round(confint_model1[9,1], 3), nsmall = 3))
+    confhigh <- as.numeric(format(round(confint_model1[9,2], 3), nsmall = 3))
     stderr <- as.numeric(format(round(res1$coefficients[7,2], 3), nsmall = 3))
     pval <- as.numeric(format(round(res1$coefficients[7,5], 3), nsmall = 3))
-    statres_line2 <- cbind(model = "model1", estimate, stderr, pval)
+    statres_line2 <- cbind(model = "model1", estimate, conflow, confhigh, stderr, pval)
     ## Model 2
-    model2 <- lmer(var ~ Treatment_group*weeks + (1|ID) + Age + Sex + BMI + Sodium, 
+    model2 <- lmer(var ~ Treatment_group*visit + (1|ID) + Age + Sex + BMI + Sodium, 
                    data = data1)
     res2 <- summary(model2)
     print(res2)
     estimate <- as.numeric(format(round(res2$coefficients[8,1], 3), nsmall = 3))
+    confint_model2 <- confint(model2)
+    conflow <- as.numeric(format(round(confint_model2[10,1], 3), nsmall = 3))
+    confhigh <- as.numeric(format(round(confint_model2[10,2], 3), nsmall = 3))
     stderr <- as.numeric(format(round(res2$coefficients[8,2], 3), nsmall = 3))
     pval <- as.numeric(format(round(res2$coefficients[8,5], 3), nsmall = 3))
-    statres_line3 <- cbind(model = "model2", estimate, stderr, pval)
+    statres_line3 <- cbind(model = "model2", estimate, conflow, confhigh, stderr, pval)
 
     statres <- rbind(statres_line1, statres_line2, statres_line3)
     statres <- as.data.frame(statres) %>% 
@@ -87,7 +96,7 @@ linearmixed_abpm_cov <- function(data, var){
                     model == "model2" ~paste0("+ Sodium intake")
             ),
             adjust_for = fct_relevel(adjust_for, "unadjusted", after = 0L),
-        across(c(2:4), as.numeric))
+        across(c(2:6), as.numeric))
     return(statres)
 }
 
@@ -98,7 +107,7 @@ plot_lmm <- function(results, dfname){
     pl1 <- ggplot(results, aes(x=outcome, y=estimate, color=adjust_for, shape = as.factor(p_signif))) +
         geom_hline(yintercept = 0, color = "grey40") +
         geom_point(position=position_dodge(-0.5)) +
-        geom_errorbar(aes(ymin=estimate - 1.96*stderr,ymax=estimate + 1.96*stderr,width=.3), 
+        geom_errorbar(aes(ymin=conflow,ymax=confhigh,width=.3), 
                       position=position_dodge(-0.5)) +
         coord_flip()+
         theme_Publication()+
@@ -124,11 +133,11 @@ save_function_bp <- function(plot, group, name, width = 5, height = 4){
 
 # Data
 df <- readRDS("data/demographics_BEAM.RDS")
-bia <- readRDS("data/bia_data.RDS") %>% select(ID, visit, BMI)
+bia <- readRDS("data/bia_data.RDS") %>% dplyr::select(ID, visit, BMI)
 lab <- readRDS("data/lab_results.RDS") %>% 
-    select(ID, visit, GFR, LDL, CRP, UrineSodium)
-urinedata <- readRDS("data/urinesamples.RDS") %>% select(ID, visit, Volume)
-dietarydata <- readRDS("data/diet_summary.RDS") %>% select(ID, visit, Sodium, Fibers)
+    dplyr::select(ID, visit, GFR, LDL, CRP, UrineSodium)
+urinedata <- readRDS("data/urinesamples.RDS") %>% dplyr::select(ID, visit, Volume)
+dietarydata <- readRDS("data/diet_summary.RDS") %>% dplyr::select(ID, visit, Sodium, Fibers)
 officebp <- readRDS("data/officebp_summary.RDS")
 homebp <- readRDS("data/homebp_perweek_BEAM.RDS")
 abpm <- readRDS("data/abpm_total.RDS")
@@ -154,14 +163,21 @@ df_total <- right_join(abpm, right_join(covariates, df, by = "ID"), by= c("ID", 
 #### LMM ####
 totsys_lm <- df_total %>% linearmixed_abpm_cov(Total_systolic_Mean) %>% mutate(outcome = "Total systolic BP")
 totdia_lm <- df_total %>% linearmixed_abpm_cov(Total_diastolic_Mean) %>% mutate(outcome = "Total diastolic BP")
+totpulse_lm <- df_total %>% linearmixed_abpm_cov(Total_HR_Mean) %>% mutate(outcome = "Total heart rate")
 daysys_lm <- df_total %>% linearmixed_abpm_cov(Awake_systolic_Mean) %>% mutate(outcome = "Daytime systolic BP")
 daydia_lm <- df_total %>% linearmixed_abpm_cov(Awake_diastolic_Mean) %>% mutate(outcome = "Daytime diastolic BP")
+daypulse_lm <- df_total %>% linearmixed_abpm_cov(Awake_HR_Mean) %>% mutate(outcome = "Daytime heart rate")
 nightsys_lm <- df_total %>% linearmixed_abpm_cov(Asleep_systolic_Mean) %>% mutate(outcome = "Nighttime systolic BP")
 nightdia_lm <- df_total %>% linearmixed_abpm_cov(Asleep_diastolic_Mean) %>% mutate(outcome = "Nighttime diastolic BP")
+nightpulse_lm <- df_total %>% linearmixed_abpm_cov(Asleep_HR_Mean) %>% mutate(outcome = "Nighttime heart rate")
 
-total_res <- bind_rows(totsys_lm, totdia_lm, daysys_lm, daydia_lm, nightsys_lm, nightdia_lm)
+total_res <- bind_rows(totsys_lm, totdia_lm, totpulse_lm,
+                       daysys_lm, daydia_lm, daypulse_lm,
+                       nightsys_lm, nightdia_lm, nightpulse_lm) %>% 
+    mutate(outcome = fct_inorder(outcome),
+           outcome = fct_rev(outcome))
 (plot_abpm <- plot_lmm(total_res, dfname = "ABPM linear mixed models"))
-save_function_bp(plot_abpm, group = "abpm", width = 6, height = 4, name = "abpm_lmm")
+save_function_bp(plot_abpm, group = "abpm", width = 6, height = 5, name = "abpm_lmm")
 
 
 #### Office BP ####
