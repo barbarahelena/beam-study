@@ -46,12 +46,12 @@ theme_Publication <- function(base_size=12, base_family="sans") {
 df <- rio::import("data/BEAM_export_20221219.csv")
 # groups <- rio::import("data/treatment_groups.xlsx")
 fecalscfa <- rio::import("data/221201_Fecal_SCFA_tidy.xlsx") %>%
-    select(ID = Studienummer, visit = Visit, contains("DW"), contains("WW"))
+    dplyr::select(ID = Studienummer, visit = Visit, contains("DW"), contains("WW"))
 reninaldo <- readxl::read_xlsx("data/15122022_ReninAldo_ErasmusMC.xlsx", skip = 3)
 ## repeated measurements to be inserted here (AE and medication)
 
 # Change participant Id into ID
-df <- df %>% select(ID = `Participant Id`, everything(.), -`V829`)
+df <- df %>% dplyr::select(ID = `Participant Id`, everything(.), -`V829`)
 names(df)
 
 # Merge with treatment allocation df and set NA values
@@ -63,34 +63,34 @@ Amelia::missmap(df)
 names(df)
 
 # Separate into different dataframes per datasource
-demographics <- df %>% select(ID, Sex, Age, AgeStrata, Smoking, PackYears,
+demographics <- df %>% dplyr::select(ID, Sex, Age, AgeStrata, Smoking, PackYears,
                               AlcoholUse, AlcoholUnits, History_List,
                               eGFR, Date_eGFR, BPlowMed = Medication_BPlowering,
                               HT_years = History_Hypertension_Years, V1_Weight, V1_Height,
                               V1_DateTime, V2_DateTime, V3_DateTime, V4_DateTime, V5_datetime,
                               Treatment_group = `Randomization Group`, (contains("V1") & contains("BP"))) 
-homebp <- df %>% select(ID, contains("HomeBP")) 
-diet <- df %>% select(ID, contains("Diet")) 
-bp_measurement <- df %>% select(ID, contains("BP_Measurement")) 
-bia <- df %>% select(ID, contains("BIA")) 
-nexfin <- df %>% select(ID, contains("Nexfin")) 
-abpm <- df %>% select(ID, contains("ABPM")) 
-pbmc <- df %>% select(ID, contains("PBMC")) 
-lab <- df %>% select(ID, contains("Lab_"),
+homebp <- df %>% dplyr::select(ID, contains("HomeBP")) 
+diet <- df %>% dplyr::select(ID, contains("Diet")) 
+bp_measurement <- df %>% dplyr::select(ID, contains("BP_Measurement")) 
+bia <- df %>% dplyr::select(ID, contains("BIA"), contains("Weight")) 
+nexfin <- df %>% dplyr::select(ID, contains("Nexfin")) 
+abpm <- df %>% dplyr::select(ID, contains("ABPM")) 
+pbmc <- df %>% dplyr::select(ID, contains("PBMC")) 
+lab <- df %>% dplyr::select(ID, contains("Lab_"),
                             contains("Leukodiff"),
                             contains("UrineLab")) 
-samplestorage <- df %>% select(ID, contains("Cryovials"),
+samplestorage <- df %>% dplyr::select(ID, contains("Cryovials"),
                                contains("Proc"),
                                contains("Feces"),
                                contains("Urine_"),
                                contains("Blood")) 
-intervention <- df %>% select(ID, contains("Capsules"))
+intervention <- df %>% dplyr::select(ID, contains("Capsules"))
 
 #### Demographics clean and check ####
 names(demographics)
 str(demographics)
 
-bp_screening <- demographics %>% select(ID, contains("BP_"), 
+bp_screening <- demographics %>% dplyr::select(ID, contains("BP_"), 
                             -(contains("Arm") | contains("Remarks") | contains("_1_"))) %>% 
     rename_with(., ~ str_remove(.x, "BP_Pressure_Measurement_")) %>% 
     rename_with(., ~ str_remove(.x, "_mmHg_")) %>% 
@@ -102,7 +102,7 @@ bp_screening <- demographics %>% select(ID, contains("BP_"),
     summarise(across(c("Systolic", "Diastolic", "Pulse"), ~ mean(.x)))
 
 demographics <- demographics %>% 
-    select(-contains("BP_")) %>% 
+    dplyr::select(-contains("BP_")) %>% 
     mutate(BPlowMed = case_when(
         BPlowMed == 1 ~ paste0("Yes"),
         BPlowMed == 0 ~ paste0("No")
@@ -113,7 +113,7 @@ demographics <- demographics %>%
     mutate(across(c("Sex", "Smoking", "BPlowMed", "AlcoholUse", "Treatment_group"), 
                   as.factor),
            Treatment_group = fct_relevel(Treatment_group, "Butyrate", after = 1L)) %>% 
-    right_join(., bp_screening %>% select(-visit), by = "ID") %>%
+    right_join(., bp_screening %>% dplyr::select(-visit), by = "ID") %>%
     rename(V1_Systolic = Systolic, V1_Diastolic = Diastolic, V1_Pulse = Pulse)
     
 
@@ -144,16 +144,16 @@ stripnames_homebp <- function(varname) {
 
 # Strip/change names for parts defined above; get rid of vars that we don't need
 homebp <- homebp %>% rename_with(., stripnames_homebp) %>% 
-    select(!(contains("Remarks") | contains("_1_"))) %>% 
+    dplyr::select(!(contains("Remarks") | contains("_1_"))) %>% 
     mutate(across(contains("Pulse") | contains("BP"), as.numeric)) %>% 
     filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713"))
 names(homebp)
 str(homebp)
 
 # min needs to pivot separately (has no timing); dates need to pivot separately
-homebp_dates <- homebp %>% select(ID, contains("Date"))
-homebp_nodates <- homebp %>% select(ID, !contains("Date"), -contains("min")) 
-homebp_min <- homebp %>% select(ID, contains("min")) %>% select(-contains("Date"))
+homebp_dates <- homebp %>% dplyr::select(ID, contains("Date"))
+homebp_nodates <- homebp %>% dplyr::select(ID, !contains("Date"), -contains("min")) 
+homebp_min <- homebp %>% dplyr::select(ID, contains("min")) %>% dplyr::select(-contains("Date"))
 
 homebp_long_min <- pivot_longer(homebp_min, cols = 2:ncol(homebp_min),
                             names_to = c("visit", "week", "measurement", "item"),
@@ -176,7 +176,7 @@ homebp_long_dates <- homebp_dates %>%
                  names_to = c("visit", "week", "measurement", "timing"),
                  names_sep = "_",
                  values_to = "date") %>% 
-    select(-measurement, -visit) %>% 
+    dplyr::select(-measurement, -visit) %>% 
     distinct()
 head(homebp_long_dates)
 
@@ -193,7 +193,7 @@ homebp_summary_perday <- homebp_summary_pertime %>% group_by(ID, week) %>%
 head(homebp_summary_perday)
 
 homebp_long_dates_morning <- homebp_long_dates %>% filter(timing == "morning" | is.na(timing)) %>% 
-    select(-timing)
+    dplyr::select(-timing)
 head(homebp_long_dates_morning)
 
 homebp_total_pertime <- right_join(homebp_summary_pertime, homebp_long_dates, 
@@ -234,7 +234,7 @@ stripnames_abpm <- function(varname) {
     varname <- str_remove(varname, "ABPM_Measurements_")
     return(varname)
 }
-abpm <- abpm %>% select(ID, contains("TotalNo"), contains("SuccessNo"),
+abpm <- abpm %>% dplyr::select(ID, contains("TotalNo"), contains("SuccessNo"),
                         contains("Arm"), contains("Bedtime"), contains("WakeUpTime"),
                         contains("Measurements")) %>% 
     filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713"))
@@ -257,8 +257,8 @@ abpm <- abpm %>% mutate(
 str(abpm)
 
 # pivot longer in two parts - short and long variables
-abpm_longvars <- abpm %>% select(ID, contains("SD"), contains("Mean"))
-abpm_shortvars <- abpm %>% select(ID, contains("ABPM")) %>% mutate(across(everything(.), as.character))
+abpm_longvars <- abpm %>% dplyr::select(ID, contains("SD"), contains("Mean"))
+abpm_shortvars <- abpm %>% dplyr::select(ID, contains("ABPM")) %>% mutate(across(everything(.), as.character))
 
 abpm_longvars <- pivot_longer(abpm_longvars, cols = 2:ncol(abpm_longvars),
                                    names_to = c("visit", "timing", "statistic", "outcome"),
@@ -272,7 +272,7 @@ abpm_shortvars <- pivot_longer(abpm_shortvars, cols = 2:ncol(abpm_shortvars),
                                    names_to = c("visit", "abpm", "variable"),
                                    names_sep = "_",
                                    values_to = "value") %>% 
-                        select(-abpm) %>% 
+                        dplyr::select(-abpm) %>% 
                         pivot_wider(., id_cols = 1:2, values_from = value,
                                     names_from = variable)
 
@@ -283,16 +283,16 @@ abpm_total <- right_join(abpm_longvars, abpm_shortvars, by = c("ID", "visit")) %
                    across(c("Bedtime", "WakeUpTime"), ~lubridate::hm(.x))) %>% 
                 droplevels(.)
 str(abpm_total)
-plot(abpm_total %>% select(contains("systolic")))
-plot(abpm_total %>% select(contains("diastolic")))
-plot(abpm_total %>% select(contains("HR")))
+plot(abpm_total %>% dplyr::select(contains("systolic")))
+plot(abpm_total %>% dplyr::select(contains("diastolic")))
+plot(abpm_total %>% dplyr::select(contains("HR")))
 
 saveRDS(abpm_total, "data/abpm_total.RDS")
 write.csv2(abpm_total, "data/abpm_total.csv")
 
 #### Dietary data ####
 str(diet)
-diet <- diet %>% select(-(contains("File") | contains("Remarks"))) %>% 
+diet <- diet %>% dplyr::select(-(contains("File") | contains("Remarks"))) %>% 
     rename_with(., ~str_replace_all(., "Saturated_fat", "SaturatedFat")) %>% 
     filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713"))
 str(diet)
@@ -300,10 +300,10 @@ diet_long <- diet %>%
     pivot_longer(., cols = 2:ncol(diet), names_sep = "_",
                  names_to = c("visit", "drop1", "variable", "drop2", "day"),
                  values_to = "value") %>% 
-    select(-drop1, -drop2) %>% 
+    dplyr::select(-drop1, -drop2) %>% 
     pivot_wider(., id_cols = c("ID", "visit", "day"), names_from = "variable",
                 values_from = "value") %>% 
-    select(-Date) %>% 
+    dplyr::select(-Date) %>% 
     mutate(visit = as.factor(visit))
 head(diet_long)
 
@@ -312,7 +312,7 @@ print(diet_long[which(as.numeric(diet_long$Energy) < 1000),], n = 100)
 diet_summary <- diet_long %>% mutate(across(.cols = c(3:11), as.numeric)) %>% 
     group_by(ID, visit) %>% 
     summarise(across(where(is.numeric), mean, na.rm = TRUE)) %>% 
-    select(-day)
+    dplyr::select(-day)
 
 head(diet_summary)
 plot(diet_summary[,3:ncol(diet_summary)])
@@ -323,8 +323,8 @@ write.csv2(diet_summary, "data/diet_summary.csv")
 #### Nexfin ####
 str(nexfin)
 
-# select vars
-nexfin <- nexfin %>% select(-contains("Remark"), -contains("yesno"), -contains("File"),
+# dplyr::select vars
+nexfin <- nexfin %>% dplyr::select(-contains("Remark"), -contains("yesno"), -contains("File"),
                             -contains('hand'), -contains("reason")) %>% 
     mutate(V2_Nexfin_MAP = as.numeric(V2_Nexfin_MAP)) %>% 
     rename_with(., ~ str_remove(.x, "_Nexfin")) %>% 
@@ -359,7 +359,7 @@ stripnames_officebp <- function(varname) {
 
 # Strip/change names for parts defined above; get rid of vars that we don't need
 officebp <- bp_measurement %>% rename_with(., stripnames_officebp) %>% 
-    select(-contains("_1_")) %>% 
+    dplyr::select(-contains("_1_")) %>% 
     mutate(across(contains("Pulse") | contains("Systolic") | contains("Diastolic"), as.numeric)) %>% 
     filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713"))
 names(officebp)
@@ -381,16 +381,16 @@ write.csv2(officebp_summary, "data/officebp_summary.csv")
 
 #### PBMC ####
 str(pbmc)
-pbmc %>% select(contains("Reason"))
-pbmc_sel <- pbmc %>% select(ID, contains("Cellcount"), contains("Cryovials")) %>% 
+pbmc %>% dplyr::select(contains("Reason"))
+pbmc_sel <- pbmc %>% dplyr::select(ID, contains("Cellcount"), contains("Cryovials")) %>% 
     filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713"))
 pbmc_sel
 
 pbmc_long <- pivot_longer(pbmc_sel, cols = 2:ncol(pbmc_sel), names_sep = "_",
                           names_to = c("visit", "drop", "variable"), values_to = "value") %>% 
-            select(-drop) %>% 
+            dplyr::select(-drop) %>% 
             pivot_wider(., id_cols = 1:2, names_from = "variable", values_from = "value") %>% 
-            select(-Cryovials) %>% 
+            dplyr::select(-Cryovials) %>% 
             mutate(Residual_count = Cellcount -3)
 head(pbmc_long)
 
@@ -408,8 +408,8 @@ write.csv2(pbmc_long, "data/pbmc_storage.csv")
 
 #### Lab ####
 str(lab)
-print(lab %>% select(contains("Remarks")), n=24)
-lab_sel <- lab %>% select(ID, !contains("Remarks")) %>% 
+print(lab %>% dplyr::select(contains("Remarks")), n=24)
+lab_sel <- lab %>% dplyr::select(ID, !contains("Remarks")) %>% 
     filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713")) %>% 
     rename_with(., ~ str_remove(.x, "Lab_")) %>% 
     rename_with(., ~ str_remove(.x, "Leukodiff_"))
@@ -432,7 +432,7 @@ write.csv2(lab_compl, "data/lab_results.csv")
 
 #### BIA ####
 str(bia)
-bia <- bia %>% select(ID, !contains("Remarks")) %>% 
+bia <- bia %>% dplyr::select(ID, !contains("Remarks")) %>% 
     filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713")) %>% 
     rename_with(., ~ str_remove(.x, "_BIA"))
 str(bia)
@@ -450,35 +450,35 @@ write.csv2(bia_long, "data/bia_data.csv")
 #### Sample storage ####
 str(samplestorage)
 names(samplestorage)
-sampleremarks <- samplestorage %>% select(ID, contains("Remarks"))
-samplestorage <- samplestorage %>% select(!(contains("PBMC") | contains("Check"))) %>% 
+sampleremarks <- samplestorage %>% dplyr::select(ID, contains("Remarks"))
+samplestorage <- samplestorage %>% dplyr::select(!(contains("PBMC") | contains("Check"))) %>% 
     rename_with(., ~ str_remove(.x, "Cryovials_")) %>% 
     rename_with(., ~ str_remove(.x, "_Number_of_cryovials")) %>% 
     rename_with(., ~ str_replace(.x, "Lithium_heparin", "heparin")) %>% 
     filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713"))
 
 # blood samples
-print(samplestorage %>% select(ID, contains("Blood") & contains("SOP")), n = 21)
-blood <- samplestorage %>% select(ID, contains("Blood") & !contains("SOP")) %>% 
+print(samplestorage %>% dplyr::select(ID, contains("Blood") & contains("SOP")), n = 21)
+blood <- samplestorage %>% dplyr::select(ID, contains("Blood") & !contains("SOP")) %>% 
     pivot_longer(., cols = 2:ncol(.), names_to = c("visit", "drop", "variable"),
                  names_sep = "_", values_to = c("value")) %>% 
-    select(-drop) %>% 
+    dplyr::select(-drop) %>% 
     pivot_wider(., id_cols = 1:2, names_from = "variable", values_from = "value")
 str(blood)
 
 write.csv2(blood, "data/bloodsamples.csv")
 
 # fecal samples; date pivoting separately
-feces_date <- samplestorage %>% select(ID, contains("Feces_DateTime")) %>% 
+feces_date <- samplestorage %>% dplyr::select(ID, contains("Feces_DateTime")) %>% 
     pivot_longer(., cols = 2:ncol(.), names_to = c("visit", "drop", "variable"),
                  names_sep = "_", values_to = c("value")) %>% 
-    select(-drop) %>% 
+    dplyr::select(-drop) %>% 
     pivot_wider(., id_cols = 1:2, names_from = "variable", values_from = "value")
-feces <- samplestorage %>% select(ID, contains("Feces"), -(contains("FecesCollection")), 
+feces <- samplestorage %>% dplyr::select(ID, contains("Feces"), -(contains("FecesCollection")), 
                                                          -(contains("Feces_DateTime"))) %>% 
     pivot_longer(., cols = 2:ncol(.), names_to = c("visit", "drop", "variable"),
                  names_sep = "_", values_to = c("value")) %>% 
-    select(-drop) %>% 
+    dplyr::select(-drop) %>% 
     pivot_wider(., id_cols = 1:2, names_from = "variable", values_from = "value") %>% 
     rename(Samples_stored = Storage)
 feces <- right_join(feces, feces_date, by = c("ID", "visit"))
@@ -487,19 +487,19 @@ head(feces)
 write.csv2(feces, "data/fecessamples.csv")
 
 # urine samples; date pivoting separately
-print(samplestorage %>% select(ID, contains("Urine") & contains("SOP")), n = 21)
-urine_dates <- samplestorage %>% select(ID, contains("Urine") & contains("DateTime")) %>% 
+print(samplestorage %>% dplyr::select(ID, contains("Urine") & contains("SOP")), n = 21)
+urine_dates <- samplestorage %>% dplyr::select(ID, contains("Urine") & contains("DateTime")) %>% 
     pivot_longer(., cols = 2:ncol(.), names_to = c("visit", "drop", "variable"),
                  names_sep = "_", values_to = c("value")) %>% 
-    select(-drop) %>% 
+    dplyr::select(-drop) %>% 
     pivot_wider(., id_cols = 1:2, names_from = "variable", values_from = "value") %>% 
     mutate(across(contains("Date"), ~dmy_hm(.x))) %>% 
     mutate(CollectionTime = EndDateTime - StartDateTime)
-urine <- samplestorage %>% select(ID, contains("Urine") & !contains("DateTime") &
+urine <- samplestorage %>% dplyr::select(ID, contains("Urine") & !contains("DateTime") &
                                       !contains("SOP")) %>% 
     pivot_longer(., cols = 2:ncol(.), names_to = c("visit", "drop", "variable"),
                  names_sep = "_", values_to = c("value")) %>% 
-    select(-drop) %>% 
+    dplyr::select(-drop) %>% 
     pivot_wider(., id_cols = 1:2, names_from = "variable", values_from = "value")
 urine <- right_join(urine, urine_dates, by = c("ID", "visit"))
 print(urine, n = 63)
@@ -508,7 +508,7 @@ saveRDS(urine, "data/urinesamples.RDS")
 write.csv2(urine, "data/urinesamples.csv")
 
 #### Renin aldo ####
-reninaldo <- reninaldo %>% select(Sample_ID, ID = Subject_ID, Renin = Kolom1, 
+reninaldo <- reninaldo %>% dplyr::select(Sample_ID, ID = Subject_ID, Renin = Kolom1, 
                                   Aldosterone = Kolom2) %>% 
     mutate(visit = str_extract(Sample_ID, "V[0-9]")) %>% 
     filter(str_detect(ID, "BEAM"))
@@ -517,8 +517,8 @@ write.csv2(reninaldo, "data/reninaldo.csv")
 
 #### Intervention ####
 str(intervention)
-print(intervention %>% select(ID, contains("Remarks")))
-intervention <- intervention %>% select(ID, !(contains("Checks") | contains("Remarks"))) %>% 
+print(intervention %>% dplyr::select(ID, contains("Remarks")))
+intervention <- intervention %>% dplyr::select(ID, !(contains("Checks") | contains("Remarks"))) %>% 
     filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713")) %>% 
     mutate(Total_NonCompliantDays = V3_Capsules_NonCompliantDays + V4_Capsules_NonCompliantDays)
 intervention$Total_NonCompliantDays
