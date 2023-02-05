@@ -96,6 +96,7 @@ covariates <- right_join(urinedata, df, by = "ID")
 
 #### Dataset for SCFA analysis ####
 df_ra <- right_join(reninaldo, covariates, by = c("ID", "visit")) %>% 
+    # filter(Renin < 15) %>% 
     filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713")) %>% 
     mutate(Treatment_group = as.factor(Treatment_group),
            visit = as.factor(visit), 
@@ -128,24 +129,24 @@ renin_lm <- df_ra %>% linearmixed_reninaldo(logRenin)
 aldo_lm <- df_ra %>% linearmixed_reninaldo(Aldosterone)
 arr_lm <- df_ra %>% linearmixed_reninaldo(logARR)
 
-# (plot_renin <- ggplot() +
-#         geom_rect(aes(xmin = 0, xmax = 4, ymin = 18, ymax = 30),
-#                   fill = "#CDCDCD", alpha = 0.3) +
-#         geom_line(data = df_means, aes(x = weeks, y = Renin_mean, 
-#                                        color = Treatment_group, group = Treatment_group), alpha = 1) +
-#         geom_line(data = df_ra, aes(x = weeks, y = Renin,
-#                                     color = Treatment_group, group = ID), alpha = 0.2) +
-#         geom_errorbar(data = df_means,
-#                       aes(ymin = Renin_mean - (Renin_sd/sqrt(Renin_n)),
-#                           ymax = Renin_mean + (Renin_sd/sqrt(Renin_n)),
-#                           x = weeks,
-#                           color = Treatment_group), width=0.1) +
-#         stat_pvalue_manual(renin_lm, y.position = 1.0, label = "p_signif",
-#                            remove.bracket = TRUE, bracket.size = 0) +
-#         scale_color_jama(guide = "none") + 
-#         scale_y_continuous(limits = c(18,30), breaks = seq(from = 18, to = 30, by = 2)) +
-#         theme_Publication() +
-#         labs(x = "Weeks", y = "Renin", title = "Renin"))
+(plot_renin <- ggplot() +
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 21),
+                  fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_means, aes(x = weeks, y = Renin_mean,
+                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
+        geom_line(data = df_ra, aes(x = weeks, y = Renin,
+                                    color = Treatment_group, group = ID), alpha = 0.2) +
+        geom_errorbar(data = df_means,
+                      aes(ymin = Renin_mean - (Renin_sd/sqrt(Renin_n)),
+                          ymax = Renin_mean + (Renin_sd/sqrt(Renin_n)),
+                          x = weeks,
+                          color = Treatment_group), width=0.1) +
+        stat_pvalue_manual(renin_lm, y.position = 1.0, label = "p_signif",
+                           remove.bracket = TRUE, bracket.size = 0) +
+        scale_color_jama(guide = "none") +
+        # scale_y_continuous(limits = c(18,30), breaks = seq(from = 18, to = 30, by = 2)) +
+        theme_Publication() +
+        labs(x = "Weeks", y = "Renin", title = "Renin"))
 
 (plot_logrenin <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0.25, ymax = 1.50),
@@ -235,6 +236,13 @@ save_function_reninaldo(plot_logrenin, "logrenin")
 save_function_reninaldo(plot_aldo, "aldo")
 save_function_reninaldo(plot_logarr, "logarr")
 
+pl_mechanisms <- ggarrange(plot_logrenin, plot_aldo, plot_logarr,
+                           plot_fena, plot_brs, plot_sdnn, 
+                           labels = c("A", "B", "C", "D", "E", "F"), 
+                           common.legend = TRUE,
+                           legend = "bottom")
+pl_mechanisms
+save_function_reninaldo(pl_mechanisms, "aldorenin_hrvbrs_fena", a = 14, b = 8)
 
 #### Boxplots ####
 reninaldo_boxplots <- df_ra %>% 
