@@ -35,12 +35,15 @@ table1 <- df_total %>%
            # BPlowMed specs
            Systolic, Diastolic, Pulse, # this is baseline office BP
            # V1_Systolic, V1_Diastolic, V1_Pulse, # this is screening BP
-           # Nexfin
+           # Nexfin meanBRS, SDNN,
            GFR, TC, HDL, LDL, TG, 
-           Energy, Fibers,
+           Energy, Fibers, Alcohol,
            Treatment_group) %>% 
-    CreateTableOne(data=., strata = 'Treatment_group', test = TRUE, addOverall = TRUE) %>% 
-    print()
+    CreateTableOne(data=.,
+                   strata = 'Treatment_group', 
+                   test = TRUE, 
+                   addOverall = TRUE) %>% 
+    print(nonnormal = "Alcohol")
 write.csv2(table1, "results/table1.csv")
 
 tab <- df %>% select(ID, Treatment_group)
