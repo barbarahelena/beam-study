@@ -85,6 +85,7 @@ df3 %>% select(Calculated_perc, Perc_pills_taken, Group) %>% filter(Calculated_p
                                                                         Perc_pills_taken == 100)
 df3 %>% select(Calculated_perc, Perc_pills_taken, Group) %>% filter(Calculated_perc >                  Perc_pills_taken )
 
+saveRDS(df3, "data/compliance_incl_pharmacy.RDS")
 
 ## Adverse events
 df_ae <- rio::import("data/BEAM_Adverse_event_export_20221219.csv") %>% 
