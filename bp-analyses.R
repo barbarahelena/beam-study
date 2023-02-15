@@ -69,10 +69,10 @@ linearmixed <- function(data, var){
     statres <- rbind(statres_line1, statres_line2)
     statres <- tibble::as_tibble(statres)
     statres$p_signif <- case_when(
-        statres$pval < 0.05 ~paste0("*"),
-        statres$pval < 0.01 ~paste0("**"),
         statres$pval < 0.001 ~paste0("***"),
-        statres$pval > 0.05 ~paste0("")
+        statres$pval < 0.01 ~paste0("**"),
+        statres$pval < 0.05 ~paste0("*"),
+        statres$pval >= 0.05 ~paste0("")
     )
     return(statres)
 }
@@ -95,10 +95,10 @@ linearmixed_homebp <- function(data, var){
     
     statres <- tibble::as_tibble(statres)
     statres$p_signif <- case_when(
-        statres$pval < 0.05 ~paste0("*"),
-        statres$pval < 0.01 ~paste0("**"),
         statres$pval < 0.001 ~paste0("***"),
-        statres$pval > 0.05 ~paste0("")
+        statres$pval < 0.01 ~paste0("**"),
+        statres$pval < 0.05 ~paste0("*"),
+        statres$pval >= 0.05 ~paste0("")
     )
     return(statres)
 }
