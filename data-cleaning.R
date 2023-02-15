@@ -44,10 +44,11 @@ theme_Publication <- function(base_size=12, base_family="sans") {
 
 # Data
 df <- rio::import("data/BEAM_export_20221219.csv")
-# groups <- rio::import("data/treatment_groups.xlsx")
 fecalscfa <- rio::import("data/221201_Fecal_SCFA_tidy.xlsx") %>%
     dplyr::select(ID = Studienummer, visit = Visit, contains("DW"), contains("WW"))
+plasmascfa <- rio::import("data/221128_EDTASamples_BEAM_Plasma_SCFA report_Xinmin Li-02-08-2023.xlsx") %>% select(ID = Subject_ID, visit = Sample_ID, 8:13)
 reninaldo <- readxl::read_xlsx("data/15122022_ReninAldo_ErasmusMC.xlsx", skip = 3)
+alcoholuse <- rio::import("data/230215_AlcoholUse.xlsx")
 ## repeated measurements to be inserted here (AE and medication)
 
 # Change participant Id into ID
@@ -55,8 +56,7 @@ df <- df %>% dplyr::select(ID = `Participant Id`, everything(.), -`V829`)
 names(df)
 
 # Merge with treatment allocation df and set NA values
-df <- right_join(df, groups, by = "ID") %>% 
-    naniar::replace_with_na_all(condition = ~(.x == -99 | .x == -96 | .x == -95 |
+df <- df %>% naniar::replace_with_na_all(condition = ~(.x == -99 | .x == -96 | .x == -95 |
                                                   .x == -98)) %>% 
     mutate(across(where(is.character), ~ na_if(.,"")))
 Amelia::missmap(df)
@@ -71,6 +71,7 @@ demographics <- df %>% dplyr::select(ID, Sex, Age, AgeStrata, Smoking, PackYears
                               Treatment_group = `Randomization Group`, (contains("V1") & contains("BP"))) 
 homebp <- df %>% dplyr::select(ID, contains("HomeBP")) 
 diet <- df %>% dplyr::select(ID, contains("Diet")) 
+alcohol <- alcoholuse %>% dplyr::select(ID = Subject, 2:4)
 bp_measurement <- df %>% dplyr::select(ID, contains("BP_Measurement")) 
 bia <- df %>% dplyr::select(ID, contains("BIA"), contains("Weight")) 
 nexfin <- df %>% dplyr::select(ID, contains("Nexfin")) 
@@ -317,6 +318,15 @@ diet_summary <- diet_long %>% mutate(across(.cols = c(3:11), as.numeric)) %>%
 head(diet_summary)
 plot(diet_summary[,3:ncol(diet_summary)])
 
+alcohol_long <- alcohol %>% 
+    pivot_longer(., cols = 2:4, names_sep = "_",
+                 names_to = c("visit", "drop1"),
+                 values_to = "Alcohol") %>% 
+    dplyr::select(-drop1) 
+
+diet_summary <- right_join(diet_summary, alcohol_long, by = c("ID", "visit"))
+head(diet_summary)
+
 saveRDS(diet_summary, "data/diet_summary.RDS")
 write.csv2(diet_summary, "data/diet_summary.csv")
 
@@ -421,7 +431,10 @@ lab_long <- lab_sel %>%
                  names_sep = "_", values_to = "value") %>% 
     pivot_wider(., id_cols = 1:2, names_from = "variable", values_from = "value")
 head(lab_long)    
-lab_compl <- right_join(lab_long, fecalscfa, by = c("ID", "visit"))
+
+plasmascfa <- plasmascfa %>% mutate(visit = str_extract(visit, "V[0-9]"))
+lab_compl <- right_join(lab_long, fecalscfa, by = c("ID", "visit")) %>% 
+    right_join(., plasmascfa, by = c("ID", "visit"))
 plot(lab_long[,3:11])
 plot(lab_long[,12:15])
 plot(lab_long[,16:18])
