@@ -103,13 +103,14 @@ df_diet <- right_join(df, dietarydata, by = c("ID")) %>%
                visit == "V4" ~ paste0(4),
                visit == "V5" ~ paste0(5)
            ),
-           weeks = as.numeric(weeks)) %>% 
+           weeks = as.numeric(weeks),
+           Alc_log = log10(Alcohol+1)) %>% 
     droplevels(.) 
 
 df_means <- df_diet %>% 
     group_by(Treatment_group, weeks) %>% 
     summarise(across(c("Energy", "Fat", "SaturatedFat", "Proteins", "Carbohydrates",
-                       "Fibers", "Salt", "Sodium"), 
+                       "Fibers", "Salt", "Sodium", "Alcohol", "Alc_log"), 
                      list(mean = ~mean(.x, na.rm = TRUE),
                           sd = ~sd(.x, na.rm = TRUE),
                           n = ~length(.x)
@@ -124,6 +125,8 @@ carbs_lm <- df_diet %>% linearmixed_diet(Carbohydrates)
 fibers_lm <- df_diet %>% linearmixed_diet(Fibers)
 salt_lm <- df_diet %>% linearmixed_diet(Salt)
 sodium_lm <- df_diet %>% linearmixed_diet(Sodium)
+alc_lm <- df_diet %>% linearmixed_diet(Alcohol)
+alc_log_lm <- df_diet %>% linearmixed_diet(Alc_log)
 
 (plot_energy <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 500, ymax = 3000),
@@ -245,13 +248,54 @@ sodium_lm <- df_diet %>% linearmixed_diet(Sodium)
         labs(x = "Weeks", y = "Sodium (mg)", title = "Sodium",
              color = ""))
 
+(plot_alcohol <- ggplot() +
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 65),
+                  fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_means, aes(x = weeks, y = Alcohol_mean, 
+                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
+        geom_line(data = df_diet, aes(x = weeks, y = Alcohol,
+                                      color = Treatment_group, group = ID), alpha = 0.2) +
+        geom_errorbar(data = df_means,
+                      aes(ymin = Alcohol_mean - (Alcohol_sd/sqrt(Alcohol_n)),
+                          ymax = Alcohol_mean + (Alcohol_sd/sqrt(Alcohol_n)),
+                          x = weeks,
+                          color = Treatment_group), width=0.1) +
+        stat_pvalue_manual(sodium_lm, y.position = 20, label = "p_signif",
+                           remove.bracket = TRUE, bracket.size = 0) +
+        scale_color_jama() + 
+        #scale_y_continuous(limits = c(0,6750), breaks = seq(from = 0, to = 6000, by = 1000)) +
+        theme_Publication() +
+        labs(x = "Weeks", y = "Alcohol (g)", title = "Alcohol",
+             color = ""))
 
-(pl_diet <- ggarrange(plot_energy, plot_fat, plot_satfat, plot_protein, plot_fibers, plot_sodium, 
-                     labels = c("A", "B", "C", "D", "E", "F"),
-                     nrow = 2, ncol = 3,
+(plot_alcohol_log <- ggplot() +
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 1),
+                  fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_means, aes(x = weeks, y = Alc_log_mean, 
+                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
+        geom_line(data = df_diet, aes(x = weeks, y = Alc_log,
+                                      color = Treatment_group, group = ID), alpha = 0.2) +
+        geom_errorbar(data = df_means,
+                      aes(ymin = Alc_log_mean - (Alc_log_sd/sqrt(Alc_log_n)),
+                          ymax = Alc_log_mean + (Alc_log_sd/sqrt(Alc_log_n)),
+                          x = weeks,
+                          color = Treatment_group), width=0.1) +
+        stat_pvalue_manual(sodium_lm, y.position = 2, label = "p_signif",
+                           remove.bracket = TRUE, bracket.size = 0) +
+        scale_color_jama() + 
+        #scale_y_continuous(limits = c(0,6750), breaks = seq(from = 0, to = 6000, by = 1000)) +
+        theme_Publication() +
+        labs(x = "Weeks", y = "Alcohol (g)", title = "Alcohol",
+             color = ""))
+
+
+(pl_diet <- ggarrange(plot_energy, plot_fat, plot_satfat, plot_protein, 
+                      plot_fibers, plot_sodium, plot_alcohol,
+                     labels = c("A", "B", "C", "D", "E", "F", "G"),
+                     nrow = 3, ncol = 3,
                      common.legend = TRUE,
                      legend = "bottom"))
-save_function_diet(pl_diet, "diet_plots", a = 9, b = 6)
+save_function_diet(pl_diet, "diet_plots", a = 9, b = 9)
 
 save_function_diet(plot_energy, "energy_diet")
 save_function_diet(plot_fat, "fat_diet")
@@ -259,3 +303,5 @@ save_function_diet(plot_satfat, "satfat_diet")
 save_function_diet(plot_protein, "protein_diet")
 save_function_diet(plot_fibers, "fibers_diet")
 save_function_diet(plot_sodium, "sodium_diet")
+save_function_diet(plot_alcohol, "alcohol_diet")
+save_function_diet(plot_alcohol_log, "alc_log_diet")
