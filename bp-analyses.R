@@ -77,6 +77,48 @@ linearmixed <- function(data, var){
     return(statres)
 }
 
+linearmixed_office <- function(data, var){
+    data0 <- data %>% filter(weeks %in% c(0,2)) %>% 
+        mutate(var = {{ var }})
+    model1_v2 <- lmer(var ~ Treatment_group*weeks + (1|ID), 
+                      data = data0)
+    res_v2 <- summary(model1_v2)
+    print(res_v2)
+    pval <- format(round(res_v2$coefficients[4,5], 3), nsmall = 3)
+    pval <- as.numeric(pval)
+    statres_line0 <- cbind(group1 = 0, group2 = 2, pval)
+    
+    data1 <- data %>% filter(weeks %in% c(0,4)) %>% 
+        mutate(var = {{ var }})
+    model1_v4 <- lmer(var ~ Treatment_group*weeks + (1|ID), 
+                      data = data1)
+    res_v4 <- summary(model1_v4)
+    print(res_v4)
+    pval <- format(round(res_v4$coefficients[4,5], 3), nsmall = 3)
+    pval <- as.numeric(pval)
+    statres_line1 <- cbind(group1 = 2, group2 = 4, pval)
+    
+    data2 <- data %>%
+        filter(weeks %in% c(4,5)) %>% 
+        mutate(var = {{ var }})
+    model1_v5 <- lmer(var ~ Treatment_group*visit + (1|ID),
+                      data = data2)
+    res_v5 <- summary(model1_v5)
+    print(res_v5)
+    pval <- format(round(res_v5$coefficients[4,5], 3), nsmall = 3)
+    pval <- as.numeric(pval)
+    statres_line2 <- cbind(group1 = 4, group2 = 5, pval)
+    
+    statres <- rbind(statres_line1, statres_line2)
+    statres <- tibble::as_tibble(statres)
+    statres$p_signif <- case_when(
+        statres$pval < 0.001 ~paste0("***"),
+        statres$pval < 0.01 ~paste0("**"),
+        statres$pval < 0.05 ~paste0("*"),
+        statres$pval >= 0.05 ~paste0("")
+    )
+    return(statres)
+}
 linearmixed_homebp <- function(data, var){
     statres <- c()
     for(a in c(2:5)){
@@ -481,12 +523,14 @@ save_function_bp(plot_homebp_1, "homebp", "home_dbp")
 save_function_bp(plot_homebp_1, "homebp", "home_pulse")
 
 #### Office BP ####
-df_office <- right_join(officebp, right_join(covariates, df, by = "ID"), by= c("ID", "visit")) %>% 
+df_office <- officebp %>% left_join(., df, by = "ID") %>% 
+    #right_join(right_join(covariates, df, by = "ID"), officebp, by= c("ID", "visit")) %>% 
     filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713")) %>% 
     mutate(Treatment_group = as.factor(Treatment_group),
            visit = as.factor(visit), 
            weeks = case_when(
                visit == "V2" ~ paste0(0),
+               visit == "V3" ~ paste0(2),
                visit == "V4" ~ paste0(4),
                visit == "V5" ~ paste0(5)
            ),
@@ -498,11 +542,10 @@ df_officemean <- df_office %>%
     group_by(Treatment_group, weeks) %>% 
     summarise(across(c("Systolic", "Diastolic", "Pulse"), list(mean = mean, sd = sd), .names = "{.col}_{.fn}"))
 
-officesys_lm <- c()
-officesys_lm <- df_office %>% linearmixed(Systolic)
+officesys_lm <- df_office %>% linearmixed_office(Systolic)
 
 (plot_officesbp <- ggplot() +
-        geom_rect(aes(xmin = 0, xmax = 4, ymin = 115, ymax = 180), 
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 105, ymax = 180), 
                   fill = "#CDCDCD", alpha = 0.4) +
         geom_line(data = df_officemean, aes(x = weeks, y = Systolic_mean, 
                                              color = Treatment_group, group = Treatment_group), alpha = 1) +
@@ -516,15 +559,14 @@ officesys_lm <- df_office %>% linearmixed(Systolic)
         stat_pvalue_manual(officesys_lm, y.position = 160, label = "p_signif", 
                            hide.ns = TRUE, remove.bracket = TRUE) +
         scale_color_jama() + 
-        scale_y_continuous(limits = c(115,180), breaks = seq(from = 115, to = 180, by = 10)) +
+        scale_y_continuous(limits = c(105,180), breaks = seq(from = 105, to = 180, by = 10)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Systolic BP (mmHg)", title = "Office systolic BP"))
+        labs(x = "Weeks", y = "Systolic BP (mmHg)", title = "Office systolic BP", color = ""))
 
-officedia_lm <- c()
-officedia_lm <- df_office %>% linearmixed(Diastolic)
+officedia_lm <- df_office %>% linearmixed_office(Diastolic)
 
 (plot_officedbp <- ggplot() +
-        geom_rect(aes(xmin = 0, xmax = 4, ymin = 70, ymax = 110), 
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 70, ymax = 115), 
                   fill = "#CDCDCD", alpha = 0.4) +
         geom_line(data = df_officemean, aes(x = weeks, y = Diastolic_mean, 
                                             color = Treatment_group, group = Treatment_group), alpha = 1) +
@@ -535,15 +577,14 @@ officedia_lm <- df_office %>% linearmixed(Diastolic)
                           ymax = Diastolic_mean + (Diastolic_sd/sqrt(11)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(officedia_lm, y.position = 105, label = "p_signif", 
+        stat_pvalue_manual(officedia_lm, y.position = 105, label = "p_signif",
                            hide.ns = TRUE, remove.bracket = TRUE) +
         scale_color_jama() + 
-        scale_y_continuous(limits = c(70,110), breaks = seq(from = 70, to = 110, by = 5)) +
+        scale_y_continuous(limits = c(70,115), breaks = seq(from = 70, to = 115, by = 5)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Diastolic BP (mmHg)", title = "Office diastolic BP"))
+        labs(x = "Weeks", y = "Diastolic BP (mmHg)", title = "Office diastolic BP", color = ""))
 
-officepulse_lm <- c()
-officepulse_lm <- df_office %>% linearmixed(Pulse)
+officepulse_lm <- df_office %>% linearmixed_office(Pulse)
 
 (plot_officepulse <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 45, ymax = 90), 
@@ -562,7 +603,7 @@ officepulse_lm <- df_office %>% linearmixed(Pulse)
         scale_color_jama() + 
         scale_y_continuous(limits = c(45,90), breaks = seq(from = 45, to = 90, by = 5)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Pulse / min", title = "Office pulse"))
+        labs(x = "Weeks", y = "Pulse / min", title = "Office pulse", color = ""))
 
 ggarrange(plot_officesbp, plot_officedbp, plot_officepulse, nrow = 1, ncol = 3,
           labels = c("A", "B", "C"),
@@ -570,6 +611,7 @@ ggarrange(plot_officesbp, plot_officedbp, plot_officepulse, nrow = 1, ncol = 3,
           legend = "bottom")
 ggsave(filename = "results/officebp/officebp_lineplots_with_lmm.svg", width = 12, height = 4)
 ggsave(filename = "results/officebp/officebp_lineplots_with_lmm.pdf", width = 12, height = 4)
+ggsave(filename = "results/officebp/officebp_lineplots_with_lmm.png", width = 12, height = 4)
 
 officebp_boxplots <- df_office %>% 
     mutate(before_after = case_when(
