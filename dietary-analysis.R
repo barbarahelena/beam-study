@@ -132,16 +132,16 @@ alc_log_lm <- df_diet %>% linearmixed_diet(Alc_log)
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 500, ymax = 3000),
                   fill = "#CDCDCD", alpha = 0.3) +
         geom_line(data = df_means, aes(x = weeks, y = Energy_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
-        geom_line(data = df_diet, aes(x = weeks, y = Energy,
-                                     color = Treatment_group, group = ID), alpha = 0.2) +
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
+        # geom_line(data = df_diet, aes(x = weeks, y = Energy,
+        #                              color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = df_means,
                       aes(ymin = Energy_mean - (Energy_sd/sqrt(Energy_n)),
                           ymax = Energy_mean + (Energy_sd/sqrt(Energy_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1) +
+                          color = Treatment_group), width=0.1, linewidth = 0.75) +
         stat_pvalue_manual(energy_lm, y.position = 2800, label = "p_signif",
-                           remove.bracket = TRUE, bracket.size = 0) +
+                           remove.bracket = TRUE, bracket.size = 0, size = 5) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(500,3000), breaks = seq(from = 500, to = 3000, by = 500)) +
         theme_Publication() +
@@ -153,15 +153,15 @@ alc_log_lm <- df_diet %>% linearmixed_diet(Alc_log)
                   fill = "#CDCDCD", alpha = 0.3) +
         geom_line(data = df_means, aes(x = weeks, y = Fat_mean, 
                                        color = Treatment_group, group = Treatment_group), alpha = 1) +
-        geom_line(data = df_diet, aes(x = weeks, y = Fat,
-                                      color = Treatment_group, group = ID), alpha = 0.2) +
+        # geom_line(data = df_diet, aes(x = weeks, y = Fat,
+        #                               color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = df_means,
                       aes(ymin = Fat_mean - (Fat_sd/sqrt(Fat_n)),
                           ymax = Fat_mean + (Fat_sd/sqrt(Fat_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1) +
+                          color = Treatment_group), width=0.1, linewidth = 0.75) +
         stat_pvalue_manual(fat_lm, y.position = 100, label = "p_signif",
-                           remove.bracket = TRUE, bracket.size = 0) +
+                           remove.bracket = TRUE, bracket.size = 0, size = 5) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(0,125), breaks = seq(from = 0, to = 125, by = 25)) +
         theme_Publication() +
@@ -172,16 +172,16 @@ alc_log_lm <- df_diet %>% linearmixed_diet(Alc_log)
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 75),
                   fill = "#CDCDCD", alpha = 0.3) +
         geom_line(data = df_means, aes(x = weeks, y = SaturatedFat_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
-        geom_line(data = df_diet, aes(x = weeks, y = SaturatedFat,
-                                      color = Treatment_group, group = ID), alpha = 0.2) +
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
+        # geom_line(data = df_diet, aes(x = weeks, y = SaturatedFat,
+        #                               color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = df_means,
                       aes(ymin = SaturatedFat_mean - (SaturatedFat_sd/sqrt(SaturatedFat_n)),
                           ymax = SaturatedFat_mean + (SaturatedFat_sd/sqrt(SaturatedFat_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1) +
+                          color = Treatment_group), width=0.1, linewidth = 0.75) +
         stat_pvalue_manual(satfat_lm, y.position = 60, label = "p_signif",
-                           remove.bracket = TRUE, bracket.size = 0) +
+                           remove.bracket = TRUE, bracket.size = 0, size = 5) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(0,75), breaks = seq(from = 0, to = 75, by = 25)) +
         theme_Publication() +
@@ -192,16 +192,16 @@ alc_log_lm <- df_diet %>% linearmixed_diet(Alc_log)
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 150),
                   fill = "#CDCDCD", alpha = 0.3) +
         geom_line(data = df_means, aes(x = weeks, y = Proteins_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
-        geom_line(data = df_diet, aes(x = weeks, y = Proteins,
-                                      color = Treatment_group, group = ID), alpha = 0.2) +
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
+        # geom_line(data = df_diet, aes(x = weeks, y = Proteins,
+        #                               color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = df_means,
                       aes(ymin = Proteins_mean - (Proteins_sd/sqrt(Proteins_n)),
                           ymax = Proteins_mean + (Proteins_sd/sqrt(Proteins_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1) +
+                          color = Treatment_group), width=0.1, linewidth = 0.75) +
         stat_pvalue_manual(protein_lm, y.position = 140, label = "p_signif",
-                           remove.bracket = TRUE, bracket.size = 0) +
+                           remove.bracket = TRUE, bracket.size = 0, size = 5) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(0,150), breaks = seq(from = 0, to = 150, by = 25)) +
         theme_Publication() +
@@ -212,16 +212,16 @@ alc_log_lm <- df_diet %>% linearmixed_diet(Alc_log)
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 60),
                   fill = "#CDCDCD", alpha = 0.3) +
         geom_line(data = df_means, aes(x = weeks, y = Fibers_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
-        geom_line(data = df_diet, aes(x = weeks, y = Fibers,
-                                      color = Treatment_group, group = ID), alpha = 0.2) +
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
+        # geom_line(data = df_diet, aes(x = weeks, y = Fibers,
+        #                               color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = df_means,
                       aes(ymin = Fibers_mean - (Fibers_sd/sqrt(Fibers_n)),
                           ymax = Fibers_mean + (Fibers_sd/sqrt(Fibers_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1) +
+                          color = Treatment_group), width=0.1, linewidth = 0.75) +
         stat_pvalue_manual(fibers_lm, y.position = 50, label = "p_signif",
-                           remove.bracket = TRUE, bracket.size = 0) +
+                           remove.bracket = TRUE, bracket.size = 0, size = 5) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(0,60), breaks = seq(from = 0, to = 60, by = 10)) +
         theme_Publication() +
@@ -232,16 +232,16 @@ alc_log_lm <- df_diet %>% linearmixed_diet(Alc_log)
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 6500),
                   fill = "#CDCDCD", alpha = 0.3) +
         geom_line(data = df_means, aes(x = weeks, y = Sodium_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
-        geom_line(data = df_diet, aes(x = weeks, y = Sodium,
-                                      color = Treatment_group, group = ID), alpha = 0.2) +
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
+        # geom_line(data = df_diet, aes(x = weeks, y = Sodium,
+        #                               color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = df_means,
                       aes(ymin = Sodium_mean - (Sodium_sd/sqrt(Sodium_n)),
                           ymax = Sodium_mean + (Sodium_sd/sqrt(Sodium_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1) +
+                          color = Treatment_group), width=0.1, linewidth = 0.75) +
         stat_pvalue_manual(sodium_lm, y.position = 4000, label = "p_signif",
-                           remove.bracket = TRUE, bracket.size = 0) +
+                           remove.bracket = TRUE, bracket.size = 0, size = 5) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(0,6750), breaks = seq(from = 0, to = 6000, by = 1000)) +
         theme_Publication() +
@@ -252,14 +252,14 @@ alc_log_lm <- df_diet %>% linearmixed_diet(Alc_log)
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 65),
                   fill = "#CDCDCD", alpha = 0.3) +
         geom_line(data = df_means, aes(x = weeks, y = Alcohol_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
-        geom_line(data = df_diet, aes(x = weeks, y = Alcohol,
-                                      color = Treatment_group, group = ID), alpha = 0.2) +
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
+        # geom_line(data = df_diet, aes(x = weeks, y = Alcohol,
+        #                               color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = df_means,
                       aes(ymin = Alcohol_mean - (Alcohol_sd/sqrt(Alcohol_n)),
                           ymax = Alcohol_mean + (Alcohol_sd/sqrt(Alcohol_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1) +
+                          color = Treatment_group), width=0.1, linewidth = 0.75) +
         stat_pvalue_manual(sodium_lm, y.position = 20, label = "p_signif",
                            remove.bracket = TRUE, bracket.size = 0) +
         scale_color_jama() + 
@@ -269,19 +269,19 @@ alc_log_lm <- df_diet %>% linearmixed_diet(Alc_log)
              color = ""))
 
 (plot_alcohol_log <- ggplot() +
-        geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 1),
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 2),
                   fill = "#CDCDCD", alpha = 0.3) +
         geom_line(data = df_means, aes(x = weeks, y = Alc_log_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
-        geom_line(data = df_diet, aes(x = weeks, y = Alc_log,
-                                      color = Treatment_group, group = ID), alpha = 0.2) +
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
+        # geom_line(data = df_diet, aes(x = weeks, y = Alc_log,
+        #                               color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = df_means,
                       aes(ymin = Alc_log_mean - (Alc_log_sd/sqrt(Alc_log_n)),
                           ymax = Alc_log_mean + (Alc_log_sd/sqrt(Alc_log_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1) +
+                          color = Treatment_group), width=0.1, linewidth = 0.75) +
         stat_pvalue_manual(sodium_lm, y.position = 2, label = "p_signif",
-                           remove.bracket = TRUE, bracket.size = 0) +
+                           remove.bracket = TRUE, bracket.size = 0, size = 5) +
         scale_color_jama() + 
         #scale_y_continuous(limits = c(0,6750), breaks = seq(from = 0, to = 6000, by = 1000)) +
         theme_Publication() +

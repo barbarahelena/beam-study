@@ -91,6 +91,9 @@ fit_data = Maaslin2(
     random_effects = c("ID"))
 
 res <- fit_data$results
+
+write.csv2(res %>% filter(metadata == "Treatment_week"), "results/16S/maaslin2/maaslin_results.csv")
+
 res2 <- res %>% filter(metadata == "Treatment_week") %>% 
     mutate(qval2 = p.adjust(pval, method = "fdr")) %>% 
     filter(pval < 0.05) %>% 

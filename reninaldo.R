@@ -88,13 +88,14 @@ save_function_reninaldo <- function(plot, name, a = 5, b = 4){
 #### Data ####
 df <- readRDS("data/demographics_BEAM.RDS")
 reninaldo <- readRDS("data/reninaldo.RDS")
-# lab <- readRDS("data/lab_results.RDS") %>% 
-#     select(ID, visit, GFR, LDL, CRP, UrineSodium, contains("DW"), contains("WW"))
+lab <- readRDS("data/lab_results.RDS") %>% 
+     select(ID, visit, Na, K, GFR, LDL, CRP, UrineSodium, contains("DW"), contains("WW"))
 # urinedata <- readRDS("data/urinesamples.RDS") %>% select(ID, visit, Volume)
 # dietarydata <- readRDS("data/diet_summary.RDS") %>% select(ID, visit, Sodium, Fibers)
-covariates <- right_join(urinedata, df, by = "ID")
+covariates <- right_join(urinedata, df, by = "ID") %>% right_join(lab, ., by = c("ID", "visit"))
+abpm <- readRDS("data/abpm_total.RDS")
 
-#### Dataset for SCFA analysis ####
+#### Dataset for renin and aldosterone analysis ####
 df_ra <- right_join(reninaldo, covariates, by = c("ID", "visit")) %>% 
     # filter(Renin < 15) %>% 
     filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713")) %>% 
@@ -130,21 +131,21 @@ aldo_lm <- df_ra %>% linearmixed_reninaldo(Aldosterone)
 arr_lm <- df_ra %>% linearmixed_reninaldo(logARR)
 
 (plot_renin <- ggplot() +
-        geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 21),
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 22),
                   fill = "#CDCDCD", alpha = 0.3) +
         geom_line(data = df_means, aes(x = weeks, y = Renin_mean,
-                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
-        geom_line(data = df_ra, aes(x = weeks, y = Renin,
-                                    color = Treatment_group, group = ID), alpha = 0.2) +
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
+        # geom_line(data = df_ra, aes(x = weeks, y = Renin,
+        #                             color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = df_means,
                       aes(ymin = Renin_mean - (Renin_sd/sqrt(Renin_n)),
                           ymax = Renin_mean + (Renin_sd/sqrt(Renin_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1) +
+                          color = Treatment_group), width=0.1, linewidth = 0.75) +
         stat_pvalue_manual(renin_lm, y.position = 1.0, label = "p_signif",
-                           remove.bracket = TRUE, bracket.size = 0) +
+                           remove.bracket = TRUE, bracket.size = 0, size = 5) +
         scale_color_jama(guide = "none") +
-        # scale_y_continuous(limits = c(18,30), breaks = seq(from = 18, to = 30, by = 2)) +
+        scale_y_continuous(limits = c(0,22), breaks = seq(from = 0, to = 20, by = 5)) +
         theme_Publication() +
         labs(x = "Weeks", y = "Renin", title = "Renin"))
 
@@ -152,15 +153,15 @@ arr_lm <- df_ra %>% linearmixed_reninaldo(logARR)
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0.25, ymax = 1.50),
                   fill = "#CDCDCD", alpha = 0.3) +
         geom_line(data = df_means, aes(x = weeks, y = logRenin_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
-        geom_line(data = df_ra, aes(x = weeks, y = logRenin,
-                                    color = Treatment_group, group = ID), alpha = 0.2) +
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
+        # geom_line(data = df_ra, aes(x = weeks, y = logRenin,
+        #                             color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = df_means,
                       aes(ymin = logRenin_mean - (logRenin_sd/sqrt(logRenin_n)),
                           ymax = logRenin_mean + (logRenin_sd/sqrt(logRenin_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(renin_lm, y.position = 1.5, label = "p_signif",
+                          color = Treatment_group), width=0.1, linewidth = 0.75) +
+        stat_pvalue_manual(renin_lm, y.position = 1.25, label = "p_signif",
                            remove.bracket = TRUE, bracket.size = 0) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(0.25,1.50), breaks = seq(from = 0.25, to = 1.50, by = 0.25)) +
@@ -171,15 +172,15 @@ arr_lm <- df_ra %>% linearmixed_reninaldo(logARR)
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0.50, ymax = 2.0),
                   fill = "#CDCDCD", alpha = 0.3) +
         geom_line(data = df_means, aes(x = weeks, y = logARR_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
-        geom_line(data = df_ra, aes(x = weeks, y = logARR,
-                                     color = Treatment_group, group = ID), alpha = 0.2) +
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
+        # geom_line(data = df_ra, aes(x = weeks, y = logARR,
+        #                              color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = df_means,
                       aes(ymin = logARR_mean - (logARR_sd/sqrt(logARR_n)),
                           ymax = logARR_mean + (logARR_sd/sqrt(logARR_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(arr_lm, y.position = 2.0, label = "p_signif",
+                          color = Treatment_group), width=0.1, linewidth = 0.75) +
+        stat_pvalue_manual(arr_lm, y.position = 1.5, label = "p_signif",
                            remove.bracket = TRUE, bracket.size = 0) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(0.5,2.0), breaks = seq(from = 0.50, to = 2.0, by = 0.25)) +
@@ -187,21 +188,21 @@ arr_lm <- df_ra %>% linearmixed_reninaldo(logARR)
         labs(x = "Weeks", y = "Log10 ARR", title = "Aldosterone-renin ratio", color = ""))
 
 (plot_aldo <- ggplot() +
-        geom_rect(aes(xmin = 0, xmax = 4, ymin = 80, ymax = 300),
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 45, ymax = 320),
                   fill = "#CDCDCD", alpha = 0.3) +
         geom_line(data = df_means, aes(x = weeks, y = Aldosterone_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
-        geom_line(data = df_ra, aes(x = weeks, y = Aldosterone,
-                                    color = Treatment_group, group = ID), alpha = 0.2) +
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
+        # geom_line(data = df_ra, aes(x = weeks, y = Aldosterone,
+        #                             color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = df_means,
                       aes(ymin = Aldosterone_mean - (Aldosterone_sd/sqrt(Aldosterone_n)),
                           ymax = Aldosterone_mean + (Aldosterone_sd/sqrt(Aldosterone_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1) +
+                          color = Treatment_group), width=0.1, linewidth = 0.75) +
         stat_pvalue_manual(aldo_lm, y.position = 250, label = "p_signif",
                            remove.bracket = TRUE, bracket.size = 0) +
         scale_color_jama() + 
-        scale_y_continuous(limits = c(80,300), breaks = seq(from = 100, to = 300, by = 50)) +
+        scale_y_continuous(limits = c(45,320), breaks = seq(from = 50, to = 300, by = 50)) +
         theme_Publication() +
         labs(x = "Weeks", y = "Aldosterone (pg/ml)", title = "Aldosterone", color = ""))
 
@@ -301,3 +302,74 @@ save_function_reninaldo(boxplot_arr, "boxplot_arr", b = 5)
 boxplots_reninaldo <- ggarrange(boxplot_renin, boxplot_aldo, boxplot_arr,
                                 nrow = 1, ncol = 3, labels = c("A", "B", "C")) 
 save_function_reninaldo(boxplots_reninaldo, "boxplots_reninaldo_sig", a = 10, b = 4)
+
+abpm_sum <- abpm %>% group_by(ID) %>% summarise(
+    deltaRR = Awake_systolic_Mean[which(visit == "V4")] - 
+        Awake_systolic_Mean[which(visit == "V2")],
+    deltaHR = Awake_HR_Mean[which(visit == "V4")] -
+        Awake_HR_Mean[which(visit == "V2")]
+)
+
+ra_sum <- df_ra %>% group_by(ID) %>% summarise(
+    deltarenin = Renin[which(visit == "V4")] - 
+        Renin[which(visit == "V2")],
+    deltaaldo = Aldosterone[which(visit == "V4")] - 
+        Aldosterone[which(visit == "V2")],
+    baserenin = Renin[which(visit == "V2")],
+    Treatment_group = Treatment_group
+) %>% distinct(.)
+df_ra2 <- left_join(ra_sum, abpm_sum, by = "ID")
+
+(pl_deltaaldo <- ggplot(df_ra2, aes(x = deltaRR, y = deltaaldo, 
+                                    color = Treatment_group)) +
+    geom_jitter(alpha = 0.5) +
+    geom_smooth(formula = y~x, method = "lm") +
+    ggsci::scale_color_jama(guide = "none") +
+    ggpubr::stat_cor()+
+    facet_wrap(~Treatment_group) + 
+    theme_Publication() +
+    labs(title = "Aldosterone change",
+         x = "delta daytime systolic BP (mmHg)",
+         y = "delta aldosterone (pg/ml)"))
+
+(pl_deltarenin <- ggplot(df_ra2, aes(x = deltaRR, y = deltarenin, 
+                                     color = Treatment_group)) +
+    geom_jitter(alpha = 0.5) +
+    geom_smooth(formula = y~x, method = "lm") +
+    ggsci::scale_color_jama(guide = "none") +
+    ggpubr::stat_cor() +
+    facet_wrap(~Treatment_group) + 
+    theme_Publication() +
+    labs(title = "Renin change",
+         x = "delta daytime systolic BP (mmHg)",
+         y = "delta renin (pg/ml)"))
+
+ggarrange(pl_deltaaldo, pl_deltarenin, nrow = 2)
+ggsave("results/reninaldo/deltaplots.pdf", height = 7, width = 8)
+
+(pl_deltahr <- ggplot(df_ra2, aes(x = deltaRR, y = deltaHR, 
+                                    color = Treatment_group)) +
+        geom_jitter(alpha = 0.5) +
+        geom_smooth(formula = y~x, method = "lm") +
+        ggsci::scale_color_jama(guide = "none") +
+        ggpubr::stat_cor()+
+        facet_wrap(~Treatment_group) + 
+        theme_Publication() +
+        labs(title = "HR change",
+             x = "delta daytime systolic BP (mmHg)",
+             y = "delta heart rate (/min)"))
+ggsave("results/reninaldo/delta_hr.pdf", height = 4, width = 8)
+
+
+(pl_deltarenin <- ggplot(df_ra2, aes(x = deltaRR, y = baserenin, 
+                                     color = Treatment_group)) +
+        geom_jitter(alpha = 0.5) +
+        geom_smooth(formula = y~x, method = "lm") +
+        ggsci::scale_color_jama(guide = "none") +
+        ggpubr::stat_cor() +
+        facet_wrap(~Treatment_group) + 
+        theme_Publication() +
+        labs(title = "Renin change",
+             x = "delta daytime systolic BP (mmHg)",
+             y = "baseline renin (pg/ml)"))
+ggsave("results/reninaldo/baselinerenin.pdf", height = 4, width = 8)

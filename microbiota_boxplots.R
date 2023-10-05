@@ -51,7 +51,6 @@ gen <- tax_glom(asvtab, taxrank="Genus")
 clindata <- readRDS("data/demographics_BEAM.RDS")
 sampleinfo <- rio::import("data/fecessamples.csv")
 clindf <- left_join(sampleinfo, clindata, by = "ID")
-clindata <- readRDS("data/clinicaldata.RDS")
 names(clindf)
 head(clindf)
 clindf <- clindf %>% mutate(
@@ -183,3 +182,4 @@ for(i in 1:nrow(gen2@tax_table)){
     ggsave(pl, filename = str_c("results/16S/genus_boxplots/gen_visit_", str_to_lower(gen_name), ".pdf"), 
            device = "pdf", width = 5, height = 5)
 }
+

@@ -49,7 +49,15 @@ fecalscfa <- rio::import("data/221201_Fecal_SCFA_tidy.xlsx") %>%
 plasmascfa <- rio::import("data/221128_EDTASamples_BEAM_Plasma_SCFA report_Xinmin Li-02-08-2023.xlsx") %>% select(ID = Subject_ID, visit = Sample_ID, 8:13)
 reninaldo <- readxl::read_xlsx("data/15122022_ReninAldo_ErasmusMC.xlsx", skip = 3)
 alcoholuse <- rio::import("data/230215_AlcoholUse.xlsx")
+serotonin <- rio::import('data/230421_BEAM_serotonin_EDTA_tidy.xlsx')
+calprotectin <- rio::import("data/230324_BEAM_calprotectine.xlsx")
+samplelijst_calprotectin <- rio::import("data/230320_Samplelijst_FecesvoorCalprotectin.xlsx")
+inflelisa <- rio::import("data/infl_elisa_tidy_2.xlsx")
+
 ## repeated measurements to be inserted here (AE and medication)
+vasomed <- read_csv2("data/BEAM_csv_export_20221219104054/BEAM_Vasoactive_medication_export_20221219.csv") %>% 
+    select(ID = `Participant Id`, everything()) %>% filter(`Participant Status` == "Completed")
+vasomed %>% filter(ID == "BEAM_909")
 
 # Change participant Id into ID
 df <- df %>% dplyr::select(ID = `Participant Id`, everything(.), -`V829`)
@@ -115,7 +123,16 @@ demographics <- demographics %>%
                   as.factor),
            Treatment_group = fct_relevel(Treatment_group, "Butyrate", after = 1L)) %>% 
     right_join(., bp_screening %>% dplyr::select(-visit), by = "ID") %>%
-    rename(V1_Systolic = Systolic, V1_Diastolic = Diastolic, V1_Pulse = Pulse)
+    rename(V1_Systolic = Systolic, V1_Diastolic = Diastolic, V1_Pulse = Pulse) %>% 
+    mutate(V2_time = hms::as_hms(lubridate::dmy_hm(V2_DateTime)),
+            V4_time = hms::as_hms(lubridate::dmy_hm(V4_DateTime)),
+            V5_time = hms::as_hms(lubridate::dmy_hm(V5_datetime)),
+            V4_time_bin = case_when(
+                V4_time > hms::as_hms("09:00:00") ~ paste("late"),
+                V4_time <= hms::as_hms("09:00:00") ~ paste("early")
+            ),
+            V4_time_bin = as.factor(V4_time_bin),
+            V4_hourdiff = (V4_time - hms::as_hms("07:30:00"))/3600)
     
 
 str(demographics)
@@ -282,7 +299,14 @@ abpm_total <- right_join(abpm_longvars, abpm_shortvars, by = c("ID", "visit")) %
                                          as.numeric),
                    across(c("Arm", "visit"), as.factor),
                    across(c("Bedtime", "WakeUpTime"), ~lubridate::hm(.x))) %>% 
-                droplevels(.)
+                droplevels(.) %>% 
+                mutate(Awake_MAP_Mean = (Awake_systolic_Mean+(2*Awake_diastolic_Mean))/3,
+                       Awake_PP_Mean = (Awake_systolic_Mean-Awake_diastolic_Mean),
+                       Asleep_MAP_Mean = (Asleep_systolic_Mean+(2*Asleep_diastolic_Mean))/3,
+                       Asleep_PP_Mean = (Asleep_systolic_Mean-Asleep_diastolic_Mean),
+                       Total_MAP_Mean = (Total_systolic_Mean+(2*Total_diastolic_Mean))/3,
+                       Total_PP_Mean = (Total_systolic_Mean-Total_diastolic_Mean),
+                       )
 str(abpm_total)
 plot(abpm_total %>% dplyr::select(contains("systolic")))
 plot(abpm_total %>% dplyr::select(contains("diastolic")))
@@ -443,6 +467,17 @@ plot(lab_long[,19:24])
 saveRDS(lab_compl, "data/lab_results.RDS")
 write.csv2(lab_compl, "data/lab_results.csv")
 
+serotonin <- serotonin %>% mutate(visit = str_c("V", Visit), Visit = NULL)
+colnames(serotonin)[3] <- "serotonin_uM"
+saveRDS(serotonin, "data/serotonin.RDS")
+write.csv2(serotonin, "data/serotonin.csv")
+
+samplelijst_calprotectin <- samplelijst_calprotectin %>% select(ID = Studienummer, visit = Visit, BARCODE = ID)
+calprotectin <- left_join(calprotectin, samplelijst_calprotectin, by = "BARCODE") 
+calprotectin <- calprotectin %>% select(ID, visit, calprotectin_ug_g = UITSLAG)
+saveRDS(calprotectin, "data/calprotectin.RDS")
+write.csv2(calprotectin, "data/calprotectin.csv")
+
 #### BIA ####
 str(bia)
 bia <- bia %>% dplyr::select(ID, !contains("Remarks")) %>% 
@@ -527,6 +562,13 @@ reninaldo <- reninaldo %>% dplyr::select(Sample_ID, ID = Subject_ID, Renin = Kol
     filter(str_detect(ID, "BEAM"))
 saveRDS(reninaldo, "data/reninaldo.RDS")
 write.csv2(reninaldo, "data/reninaldo.csv")
+
+#### Infl ELISAs ####
+inflelisa <- inflelisa %>% select(SampleID = ID, everything(.)) %>% 
+    mutate(visit = str_extract(SampleID, "V[0-9]"),
+           ID = str_extract(SampleID, "BEAM_[0-9]*"))
+saveRDS(inflelisa, "data/inflelisa.RDS")
+write.csv2(inflelisa, "data/inflelisa.csv")
 
 #### Intervention ####
 str(intervention)

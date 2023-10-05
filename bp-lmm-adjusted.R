@@ -53,9 +53,9 @@ linearmixed_abpm_cov <- function(data, var){
     confint_model0 <- confint(model0)
     print(res0)
     estimate <- as.numeric(format(round(res0$coefficients[4,1], 3), nsmall = 3))
-    stderr <- as.numeric(format(round(res0$coefficients[4,2], 3), nsmall = 3))
     conflow <- as.numeric(format(round(confint_model0[6,1], 3), nsmall = 3))
     confhigh <- as.numeric(format(round(confint_model0[6,2], 3), nsmall = 3))
+    stderr <- as.numeric(format(round(res0$coefficients[4,2], 3), nsmall = 3))
     pval <- as.numeric(format(round(res0$coefficients[4,5], 3), nsmall = 3))
     statres_line1 <- cbind(model = "model0", estimate, conflow, confhigh, stderr, pval)
     ## Model 1
@@ -71,29 +71,30 @@ linearmixed_abpm_cov <- function(data, var){
     pval <- as.numeric(format(round(res1$coefficients[7,5], 3), nsmall = 3))
     statres_line2 <- cbind(model = "model1", estimate, conflow, confhigh, stderr, pval)
     ## Model 2
-    model2 <- lmer(var ~ Treatment_group*visit + (1|ID) + Age + Sex + BMI + Sodium, 
+    model2 <- lmer(var ~ Treatment_group*visit + (1|ID) + Age + Sex + BMI + 
+                       Capsules_left + Sodium, 
                    data = data1)
     res2 <- summary(model2)
     print(res2)
-    estimate <- as.numeric(format(round(res2$coefficients[8,1], 3), nsmall = 3))
+    estimate <- as.numeric(format(round(res2$coefficients[9,1], 3), nsmall = 3))
     confint_model2 <- confint(model2)
-    conflow <- as.numeric(format(round(confint_model2[10,1], 3), nsmall = 3))
-    confhigh <- as.numeric(format(round(confint_model2[10,2], 3), nsmall = 3))
-    stderr <- as.numeric(format(round(res2$coefficients[8,2], 3), nsmall = 3))
-    pval <- as.numeric(format(round(res2$coefficients[8,5], 3), nsmall = 3))
+    conflow <- as.numeric(format(round(confint_model2[11,1], 3), nsmall = 3))
+    confhigh <- as.numeric(format(round(confint_model2[11,2], 3), nsmall = 3))
+    stderr <- as.numeric(format(round(res2$coefficients[9,2], 3), nsmall = 3))
+    pval <- as.numeric(format(round(res2$coefficients[9,5], 3), nsmall = 3))
     statres_line3 <- cbind(model = "model2", estimate, conflow, confhigh, stderr, pval)
 
     statres <- rbind(statres_line1, statres_line2, statres_line3)
     statres <- as.data.frame(statres) %>% 
         mutate(p_signif = case_when(
-                    pval < 0.05 ~paste0("*"),
-                    pval < 0.01 ~paste0("**"),
                     pval < 0.001 ~paste0("***"),
+                    pval < 0.01 ~paste0("**"),
+                    pval < 0.05 ~paste0("*"),
                     pval > 0.05 ~paste0("")),
             adjust_for = case_when(
                     model == "model0" ~paste0("unadjusted"),
-                    model == "model1" ~paste0("+ Age, sex, BMI"),
-                    model == "model2" ~paste0("+ Sodium intake")
+                    model == "model1" ~paste0("Age, sex, BMI"),
+                    model == "model2" ~paste0("adjusted") # age, sex, BMI, sodium, compliance
             ),
             adjust_for = fct_relevel(adjust_for, "unadjusted", after = 0L),
         across(c(2:6), as.numeric))
@@ -102,8 +103,8 @@ linearmixed_abpm_cov <- function(data, var){
 
 plot_lmm <- function(results, dfname){
     ylab <- "estimate butyrate*time"
-    colors <- pal_lancet()(4)[c(1:4)]
-    
+    colors <- pal_lancet()(4)[c(1,3)]
+    results <- results %>% filter(model %in% c("model0", "model2"))
     pl1 <- ggplot(results, aes(x=outcome, y=estimate, color=adjust_for, shape = as.factor(p_signif))) +
         geom_hline(yintercept = 0, color = "grey40") +
         geom_point(position=position_dodge(-0.5)) +
@@ -113,8 +114,7 @@ plot_lmm <- function(results, dfname){
         theme_Publication()+
         labs(x = "", y = ylab, 
              title = str_c(dfname)) +
-        # scale_y_continuous(breaks = c(-0.5, -0.4, -0.3, -0.2, -0.1, 0, 
-        #                               0.1, 0.2, 0.3, 0.4, 0.5)) +
+        scale_y_continuous(breaks = seq(from = -10, to = 16, by = 2)) +
         scale_color_manual(values = colors) + 
         scale_shape_manual(values = c(21,19), guide = "none") +
         theme(legend.title = element_blank(),
@@ -132,23 +132,40 @@ save_function_bp <- function(plot, group, name, width = 5, height = 4){
 }
 
 # Data
-df <- readRDS("data/demographics_BEAM.RDS")
+df <- readRDS("data/demographics_BEAM.RDS") %>% 
+    mutate(V2_time = hms::as_hms(lubridate::dmy_hm(V2_DateTime)),
+           V4_time = hms::as_hms(lubridate::dmy_hm(V4_DateTime)),
+           V5_time = hms::as_hms(lubridate::dmy_hm(V5_datetime)),
+           V4_time_bin = case_when(
+               V4_time > hms::as_hms("09:00:00") ~ paste("late"),
+               V4_time <= hms::as_hms("09:00:00") ~ paste("early")
+           ),
+           V4_time_bin = as.factor(V4_time_bin),
+           V4_hourdiff = (V4_time - hms::as_hms("07:30:00"))/3600)
+
+df2 <- df %>% pivot_longer(., cols = 25:27,
+                           names_to = c("visit", "rest"),
+                           names_sep = "_",
+                           values_to = "time") %>% 
+    dplyr::select(-rest)
 bia <- readRDS("data/bia_data.RDS") %>% dplyr::select(ID, visit, BMI)
 lab <- readRDS("data/lab_results.RDS") %>% 
     dplyr::select(ID, visit, GFR, LDL, CRP, UrineSodium)
 urinedata <- readRDS("data/urinesamples.RDS") %>% dplyr::select(ID, visit, Volume)
-dietarydata <- readRDS("data/diet_summary.RDS") %>% dplyr::select(ID, visit, Sodium, Fibers)
+dietarydata <- readRDS("data/diet_summary.RDS") %>% dplyr::select(ID, visit, Sodium, Fibers, Alcohol)
 officebp <- readRDS("data/officebp_summary.RDS")
 homebp <- readRDS("data/homebp_perweek_BEAM.RDS")
+compliance <- readRDS("data/compliance_incl_pharmacy.RDS")
 abpm <- readRDS("data/abpm_total.RDS")
 
 #### ABPM ####
 covariates <- right_join(bia, 
                          right_join(lab, 
-                                    right_join(dietarydata, urinedata, by = c("ID", "visit")), 
-                                    by = c("ID", "visit")),
-                         by = c("ID", "visit"))
-df_total <- right_join(abpm, right_join(covariates, df, by = "ID"), by= c("ID", "visit")) %>% 
+                                    right_join(dietarydata, 
+                                               right_join(urinedata,
+                                                          right_join(df, compliance))))) %>% 
+    mutate(Alc_log = log10(Alcohol+0.1))
+df_total <- right_join(abpm, covariates, by= c("ID", "visit")) %>% 
     filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713")) %>% 
     mutate(Treatment_group = as.factor(Treatment_group),
            visit = as.factor(visit), 
@@ -177,8 +194,7 @@ total_res <- bind_rows(totsys_lm, totdia_lm, totpulse_lm,
     mutate(outcome = fct_inorder(outcome),
            outcome = fct_rev(outcome))
 (plot_abpm <- plot_lmm(total_res, dfname = "ABPM linear mixed models"))
-save_function_bp(plot_abpm, group = "abpm", width = 6, height = 5, name = "abpm_lmm")
-
+save_function_bp(plot_abpm, group = "abpm", width = 5, height = 5, name = "abpm_lmm_2")
 
 #### Office BP ####
 df_office <- right_join(officebp, right_join(covariates, df, by = "ID"), by= c("ID", "visit")) %>% 

@@ -26,6 +26,7 @@ head(df_total)
 names(df_total)
 df_total <- df_total %>% filter(! ID %in% c("BEAM_664")) %>% ungroup()
 
+
 # Table 1
 table1 <- df_total %>%
     filter(! visit %in% c("V4", "V5")) %>% 

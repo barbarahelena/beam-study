@@ -153,14 +153,14 @@ brs_lmm <- linearmixed_nexfin(nexfin_total, meanBRS)
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 100, ymax = 200),
                   fill = "#CDCDCD", alpha = 0.3) +
         geom_line(data = nexfin_means, aes(x = weeks, y = SBP_mean, 
-                                          color = Treatment_group, group = Treatment_group), alpha = 1) +
-        geom_line(data = nexfin_total, aes(x = weeks, y = SBP,
-                                          color = Treatment_group, group = ID), alpha = 0.2) +
+                                          color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
+        # geom_line(data = nexfin_total, aes(x = weeks, y = SBP,
+        #                                   color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = nexfin_means,
                       aes(ymin = SBP_mean - (SBP_sd/sqrt(SBP_n)),
                           ymax = SBP_mean + (SBP_sd/sqrt(SBP_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1) +
+                          color = Treatment_group), width=0.1, linewidth = 0.75) +
         stat_pvalue_manual(sbp_lmm, y.position = 170, label =  "{pval}", 
                            remove.bracket = TRUE, bracket.size = 0) +
         scale_color_jama() + 
@@ -173,14 +173,14 @@ brs_lmm <- linearmixed_nexfin(nexfin_total, meanBRS)
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 55, ymax = 100),
                   fill = "#CDCDCD", alpha = 0.3) +
         geom_line(data = nexfin_means, aes(x = weeks, y = DBP_mean, 
-                                           color = Treatment_group, group = Treatment_group), alpha = 1) +
-        geom_line(data = nexfin_total, aes(x = weeks, y = DBP,
-                                           color = Treatment_group, group = ID), alpha = 0.2) +
+                                           color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
+        # geom_line(data = nexfin_total, aes(x = weeks, y = DBP,
+        #                                    color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = nexfin_means,
                       aes(ymin = DBP_mean - (DBP_sd/sqrt(DBP_n)),
                           ymax = DBP_mean + (DBP_sd/sqrt(DBP_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1) +
+                          color = Treatment_group), width=0.1, linewidth = 0.75) +
         stat_pvalue_manual(dbp_lmm, y.position = 90, label =  "{pval}", 
                            remove.bracket = TRUE, bracket.size = 0) +
         scale_color_jama() + 
@@ -194,14 +194,14 @@ brs_lmm <- linearmixed_nexfin(nexfin_total, meanBRS)
                   fill = "#CDCDCD", alpha = 0.3) +
         geom_line(data = nexfin_means, aes(x = weeks, y = CO_mean, 
                                            color = Treatment_group, 
-                                           group = Treatment_group), alpha = 1) +
-        geom_line(data = nexfin_total, aes(x = weeks, y = CO,
-                                           color = Treatment_group, group = ID), alpha = 0.2) +
+                                           group = Treatment_group), alpha = 1, linewidth = 0.75) +
+        # geom_line(data = nexfin_total, aes(x = weeks, y = CO,
+        #                                    color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = nexfin_means,
                       aes(ymin = CO_mean - (CO_sd/sqrt(CO_n)),
                           ymax = CO_mean + (CO_sd/sqrt(CO_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1) +
+                          color = Treatment_group), width=0.1, linewidth = 0.75) +
         stat_pvalue_manual(co_lmm, y.position = 7.0, label = "p = {pval}", 
                            remove.bracket = TRUE, bracket.size = 0) +
         scale_color_jama() + 
@@ -214,16 +214,16 @@ brs_lmm <- linearmixed_nexfin(nexfin_total, meanBRS)
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 3000),
                   fill = "#CDCDCD", alpha = 0.3) +
         geom_line(data = nexfin_means, aes(x = weeks, y = dPdt_mean, 
-                                           color = Treatment_group, group = Treatment_group), alpha = 1) +
-        geom_line(data = nexfin_total, aes(x = weeks, y = dPdt,
-                                           color = Treatment_group, group = ID), alpha = 0.2) +
+                                           color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
+        # geom_line(data = nexfin_total, aes(x = weeks, y = dPdt,
+        #                                    color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = nexfin_means,
                       aes(ymin = dPdt_mean - (dPdt_sd/sqrt(MAP_n)),
                           ymax = dPdt_mean + (dPdt_sd/sqrt(MAP_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(dpdt_lmm, y.position = 2000, label = "{pval}", 
-                           remove.bracket = TRUE, bracket.size = 0) +
+                          color = Treatment_group), width=0.1, linewidth = 0.75) +
+        # stat_pvalue_manual(dpdt_lmm, y.position = 2000, label = "{pval}", 
+        #                    remove.bracket = TRUE, bracket.size = 0) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(0,3000), breaks = seq(from = 0, to = 3000, by = 500)) +
         theme_Publication() +
@@ -234,16 +234,16 @@ brs_lmm <- linearmixed_nexfin(nexfin_total, meanBRS)
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 0.3),
                   fill = "#CDCDCD", alpha = 0.3) +
         geom_line(data = nexfin_means, aes(x = weeks, y = pNN50_mean, 
-                                           color = Treatment_group, group = Treatment_group), alpha = 1) +
-        geom_line(data = nexfin_total, aes(x = weeks, y = pNN50,
-                                           color = Treatment_group, group = ID), alpha = 0.2) +
+                                           color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
+        # geom_line(data = nexfin_total, aes(x = weeks, y = pNN50,
+        #                                    color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = nexfin_means,
                       aes(ymin = pNN50_mean - (pNN50_sd/sqrt(pNN50_n)),
                           ymax = pNN50_mean + (pNN50_sd/sqrt(pNN50_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(pnn50_lmm, y.position = 0.2, label = "{pval}", 
-                           remove.bracket = TRUE, bracket.size = 0) +
+                          color = Treatment_group), width=0.1, linewidth = 0.75) +
+        # stat_pvalue_manual(pnn50_lmm, y.position = 0.2, label = "{pval}", 
+        #                    remove.bracket = TRUE, bracket.size = 0) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(0,0.3), breaks = seq(from = 0, to = 0.3, by = 0.1)) +
         theme_Publication() +
@@ -254,16 +254,16 @@ brs_lmm <- linearmixed_nexfin(nexfin_total, meanBRS)
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 0.10),
                   fill = "#CDCDCD", alpha = 0.3) +
         geom_line(data = nexfin_means, aes(x = weeks, y = SDNN_mean, 
-                                           color = Treatment_group, group = Treatment_group), alpha = 1) +
-        geom_line(data = nexfin_total, aes(x = weeks, y = SDNN,
-                                           color = Treatment_group, group = ID), alpha = 0.2) +
+                                           color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
+        # geom_line(data = nexfin_total, aes(x = weeks, y = SDNN,
+        #                                    color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = nexfin_means,
                       aes(ymin = SDNN_mean - (SDNN_sd/sqrt(SDNN_n)),
                           ymax = SDNN_mean + (SDNN_sd/sqrt(SDNN_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(sdnn_lmm, y.position = 0.08, label = "{pval}",
-                           remove.bracket = TRUE) +
+                          color = Treatment_group), width=0.1, linewidth = 0.75) +
+        # stat_pvalue_manual(sdnn_lmm, y.position = 0.08, label = "{pval}",
+        #                    remove.bracket = TRUE, size = 5) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(0,0.10), breaks = seq(from = 0, to = 0.10, by = 0.02)) +
         theme_Publication() +
@@ -274,16 +274,16 @@ brs_lmm <- linearmixed_nexfin(nexfin_total, meanBRS)
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 16),
                   fill = "#CDCDCD", alpha = 0.3) +
         geom_line(data = nexfin_means, aes(x = weeks, y = meanBRS_mean, 
-                                           color = Treatment_group, group = Treatment_group), alpha = 1) +
-        geom_line(data = nexfin_total, aes(x = weeks, y = meanBRS,
-                                           color = Treatment_group, group = ID), alpha = 0.2) +
+                                           color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
+        # geom_line(data = nexfin_total, aes(x = weeks, y = meanBRS,
+        #                                    color = Treatment_group, group = ID), alpha = 0.2) +
         geom_errorbar(data = nexfin_means,
                       aes(ymin = meanBRS_mean - (meanBRS_sd/sqrt(meanBRS_n)),
                           ymax = meanBRS_mean + (meanBRS_sd/sqrt(meanBRS_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(brs_lmm, y.position = 13, label = "{pval}",
-                           remove.bracket = TRUE) +
+                          color = Treatment_group), width=0.1, linewidth = 0.75) +
+        # stat_pvalue_manual(brs_lmm, y.position = 13, label = "{pval}",
+        #                    remove.bracket = TRUE) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(0,16), breaks = seq(from = 0, to = 16, by = 2)) +
         theme_Publication() +

@@ -10,6 +10,7 @@ asvtab <- readRDS("data/ps.2022_28_BEAM.global.2022-12-22.curated.RDS")
 
 sum(asvtab@otu_table[1,]) 
 sum(asvtab@otu_table[2,]) # check that samples are not rarefied
+hist(rowSums(asvtab@otu_table))
 asvtab@otu_table[1,1]
 sample_names(asvtab)
 asvtab
@@ -39,6 +40,12 @@ asvtab@phy_tree <- tree_rooted
 
 sample_sums(asvtab)
 asvtab
+lactobac_filter <- asvtab@tax_table[which(str_detect(gen@tax_table[,"Family"], "Lactobacillaceae"))]
+rownames(lactobac_filter)
+lactobac <- c("ASV_0089", "ASV_0090")
+gen3 = subset_taxa(asvtab, Genus %in% "Lactobacillus")
+saveRDS(gen3, 'results/phyloseq_BEAM_lactobacillus.RDS')
+
 saveRDS(asvtab, 'results/phyloseq_BEAM.RDS')
 
 ## Inspect phyloseq object

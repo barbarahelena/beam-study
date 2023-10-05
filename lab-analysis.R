@@ -111,26 +111,29 @@ df_lab <- right_join(lab, covariates, by = c("ID", "visit")) %>%
 df_means <- df_lab %>% 
     group_by(Treatment_group, weeks) %>% 
     summarise(across(c("CRP", "Hb", "Ht", "Trombo", "Leuko",
-                       "Na", "K", "Kreat", "GFR", "TC", "HDL", "LDL", "TG"), 
+                       "Na", "K", "Kreat", "GFR", "TC", "HDL", "LDL", "TG",
+                       "UrineK", "UrineSodium"), 
                      list(mean = ~mean(.x, na.rm = TRUE),
                           sd = ~sd(.x, na.rm = TRUE),
                           n = ~length(.x)
                      ), .names = "{.col}_{.fn}"))
 
 #### Lab plots with LMMs ####
-crp_lm <- df_lab %>% linearmixed_bia(CRP)
-hb_lm <- df_lab %>% linearmixed_bia(Hb)
-ht_lm <- df_lab %>% linearmixed_bia(Ht)
-trombo_lm <- df_lab %>% linearmixed_bia(Trombo)
-leuko_lm <- df_lab %>% linearmixed_bia(Leuko)
-na_lm <- df_lab %>% linearmixed_bia(Na)
-k_lm <- df_lab %>% linearmixed_bia(K)
-kreat_lm <- df_lab %>% linearmixed_bia(Kreat)
-gfr_lm <- df_lab %>% linearmixed_bia(GFR)
-tc_lm <- df_lab %>% linearmixed_bia(TC)
-hdl_lm <- df_lab %>% linearmixed_bia(HDL)
-ldl_lm <- df_lab %>% linearmixed_bia(LDL)
-tg_lm <- df_lab %>% linearmixed_bia(TG)
+crp_lm <- df_lab %>% linearmixed_lab(CRP)
+hb_lm <- df_lab %>% linearmixed_lab(Hb)
+ht_lm <- df_lab %>% linearmixed_lab(Ht)
+trombo_lm <- df_lab %>% linearmixed_lab(Trombo)
+leuko_lm <- df_lab %>% linearmixed_lab(Leuko)
+na_lm <- df_lab %>% linearmixed_lab(Na)
+k_lm <- df_lab %>% linearmixed_lab(K)
+kreat_lm <- df_lab %>% linearmixed_lab(Kreat)
+gfr_lm <- df_lab %>% linearmixed_lab(GFR)
+tc_lm <- df_lab %>% linearmixed_lab(TC)
+hdl_lm <- df_lab %>% linearmixed_lab(HDL)
+ldl_lm <- df_lab %>% linearmixed_lab(LDL)
+tg_lm <- df_lab %>% linearmixed_lab(TG)
+una_lm <- df_lab %>% linearmixed_lab(UrineSodium)
+uk_lm <- df_lab %>% linearmixed_lab(UrineK)
 
 (plot_tc <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 3, ymax = 8),
