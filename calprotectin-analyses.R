@@ -77,7 +77,6 @@ linearmixed_cal <- function(data, var){
     return(statres)
 }
 
-
 save_function <- function(plot, name){
     ggsave(plot = plot, 
            filename = str_c("results/calprotectin/", name, ".pdf"), width = 5, height = 4)
@@ -87,25 +86,8 @@ save_function <- function(plot, name){
            filename = str_c("results/calprotectin/", name, ".png"), width = 5, height = 4)
 }
 
-
 #### Data ####
-df <- readRDS("data/demographics_BEAM.RDS") %>% 
-    mutate(V2_time = hms::as_hms(lubridate::dmy_hm(V2_DateTime)),
-           V4_time = hms::as_hms(lubridate::dmy_hm(V4_DateTime)),
-           V5_time = hms::as_hms(lubridate::dmy_hm(V5_datetime)),
-           V4_time_bin = case_when(
-               V4_time > hms::as_hms("09:00:00") ~ paste("late"),
-               V4_time <= hms::as_hms("09:00:00") ~ paste("early")
-           ),
-           V4_time_bin = as.factor(V4_time_bin),
-           V4_hourdiff = (V4_time - hms::as_hms("07:30:00"))/3600)
-
-df2 <- df %>% pivot_longer(., cols = 25:27,
-                 names_to = c("visit", "rest"),
-                 names_sep = "_",
-                 values_to = "time") %>% 
-    dplyr::select(-rest)
-    
+df <- readRDS("data/demographics_BEAM.RDS") 
 calprotectin <- readRDS("data/calprotectin.RDS")
 
 #### Dataset for serotonin analysis ####
@@ -134,9 +116,8 @@ df_means <- df_calprotectin %>%
                  ),
                  .names = "{.col}_{.fn}"))
 
-#### Serotonin plot with LMM ####
-cal_lm <- c()
-cal_lm <- df_calprotectin %>% linearmixed_cal(calprotectin_ug_g)
+#### Calprotectin plot with LMM ####
+log_cal <- df_calprotectin %>% linearmixed_cal(log_cal)
 
 (plot_calprotectin <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 200),
@@ -150,35 +131,12 @@ cal_lm <- df_calprotectin %>% linearmixed_cal(calprotectin_ug_g)
                           ymax = calprotectin_ug_g_mean + (calprotectin_ug_g_sd/sqrt(calprotectin_ug_g_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(cal_lm, y.position = 100, label = "p_signif",
+        stat_pvalue_manual(log_cal, y.position = 100, label = "p_signif",
                            remove.bracket = TRUE, size = 5) +
         scale_color_jama() + 
-        scale_y_continuous(limits = c(0,200), breaks = seq(from = 0, to = 200, by = 20)) +
+        # scale_y_continuous(limits = c(0,200), breaks = seq(from = 0, to = 200, by = 20)) +
+        scale_y_log10(limits = c(4, 200)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Calprotectin (ug/g)", title = "Fecal calprotectin levels", color = ""))
+        labs(x = "Weeks", y = "Calprotectin (ug/g)", title = "Fecal calprotectin", color = ""))
 
 save_function(plot_calprotectin, "fecal_calprotectin")
-
-logcal_lm <- c()
-logcal_lm <- df_calprotectin %>% linearmixed_cal(log_cal)
-
-(plot_log_cal <- ggplot() +
-        geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 2.5),
-                  fill = "#CDCDCD", alpha = 0.3) +
-        geom_line(data = df_means, aes(x = weeks, y = log_cal_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
-        geom_line(data = df_calprotectin, aes(x = weeks, y = log_cal,
-                                           color = Treatment_group, group = ID), alpha = 0.2) +
-        geom_errorbar(data = df_means,
-                      aes(ymin = log_cal_mean - (log_cal_sd/sqrt(log_cal_n)),
-                          ymax = log_cal_mean + (log_cal_sd/sqrt(log_cal_n)),
-                          x = weeks,
-                          color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(logcal_lm, y.position = 0.75, label = "p_signif", remove.bracket = TRUE, size = 5) +
-        scale_color_jama() + 
-        scale_y_continuous(limits = c(0,2.5), breaks = seq(from = 0, to = 2.5, by = 0.5)) +
-        theme_Publication() +
-        labs(x = "Weeks", y = "Log10(calprotectin (ug/g))", title = "Fecal calprotectin levels", color = ""))
-
-save_function(plot_log_cal, "plasma_logcal")
-
