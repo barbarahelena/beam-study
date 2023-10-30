@@ -43,39 +43,6 @@ theme_Publication <- function(base_size=12, base_family="sans") {
         ))
 } 
 
-linearmixed_scfa <- function(data, var){
-    data1 <- data %>% filter(weeks %in% c(0,4)) %>% 
-        mutate(var = {{ var }})
-    model1_v4 <- lmer(var ~ Treatment_group*weeks + (1|ID), 
-                      data = data1)
-    res_v4 <- summary(model1_v4)
-    print(res_v4)
-    pval <- format(round(res_v4$coefficients[4,5], 3), nsmall = 3)
-    pval <- as.numeric(pval)
-    statres_line1 <- cbind(group1 = 0, group2 = 4, pval)
-    
-    data2 <- data %>%
-        filter(weeks %in% c(4,5)) %>% 
-        mutate(var = {{ var }})
-    model1_v5 <- lmer(var ~ Treatment_group*weeks + (1|ID),
-                      data = data2)
-    res_v5 <- summary(model1_v5)
-    print(res_v5)
-    pval <- format(round(res_v5$coefficients[4,5], 3), nsmall = 3)
-    pval <- as.numeric(pval)
-    statres_line2 <- cbind(group1 = 4, group2 = 5, pval)
-    
-    statres <- rbind(statres_line1, statres_line2)
-    statres <- tibble::as_tibble(statres)
-    statres$p_signif <- case_when(
-        statres$pval < 0.05 ~paste0("*"),
-        statres$pval < 0.01 ~paste0("**"),
-        statres$pval < 0.001 ~paste0("***"),
-        statres$pval > 0.05 ~paste0("")
-    )
-    return(statres)
-}
-
 linearmixed_scfa_cov <- function(data, var){
     data1 <- data %>% filter(weeks %in% c(0,4)) %>% 
         mutate(var = {{ var }})
