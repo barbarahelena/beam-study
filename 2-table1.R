@@ -1,4 +1,4 @@
-# Table 1
+# Table 1, compliance and adverse events
 # Barbara Verhaar, b.j.verhaar@amsterdamumc.nl
 
 # Library
@@ -8,35 +8,26 @@ library(kableExtra)
 
 # Data
 df <- readRDS("data/demographics_BEAM.RDS")
-officebp <- readRDS("data/officebp_summary.RDS")
-officebp_v2 <- officebp %>% filter(visit == "V2") %>% select(-visit)
-bia <- readRDS("data/bia_data.RDS")
-diet <- readRDS("data/diet_summary.RDS")
-bmi <- bia %>% filter(visit == "V2") %>% select(ID, BMI)
-lab <- readRDS("data/lab_results.RDS")
-lab_v2 <- lab %>% filter(visit == "V2") %>% select(ID, GFR, TC, HDL, LDL, TG)
-nexfin <- readRDS("data/nexfin_data.RDS")
-nexfin_v2 <- nexfin %>% filter(visit == "V2") %>% select(ID, meanBRS, SDNN)
-df_total <- right_join(officebp_v2, df, by = "ID")
-df_total <- right_join(bmi, df_total, by = "ID")
-df_total <- right_join(lab_v2, df_total, by = "ID")
-df_total <- right_join(nexfin_v2, df_total, by = "ID")
-df_total <- right_join(diet, df_total, by = "ID")
-head(df_total)
-names(df_total)
-df_total <- df_total %>% filter(! ID %in% c("BEAM_664")) %>% ungroup()
-
+officebp <- readRDS("data/officebp_summary.RDS") %>% filter(visit == "V2")
+bmi <- readRDS("data/bia_data.RDS") %>% filter(visit == "V2") %>% select(ID, BMI)
+diet <- readRDS("data/diet_summary.RDS") %>% filter(visit == "V2")
+lab <- readRDS("data/lab_results.RDS") %>% filter(visit == "V2") %>% select(ID, GFR, TC, HDL, LDL, TG)
+abpm <- readRDS("data/abpm_total.RDS") %>% filter(visit == "V2")
+df_total <- right_join(officebp, df, by = "ID") %>% 
+                right_join(bmi, ., by = "ID") %>% 
+                right_join(lab, ., by = "ID") %>% 
+                right_join(diet, ., by = "ID") %>% 
+                right_join(abpm, ., by = "ID") %>% 
+                filter(! ID %in% c("BEAM_664")) %>%  # this participant did not get randomized
+                ungroup()
 
 # Table 1
 table1 <- df_total %>%
-    filter(! visit %in% c("V4", "V5")) %>% 
     select(Age, Sex, BMI, Smoking, 
-           # VG? CVD?
            BPlowMed, 
-           # BPlowMed specs
+           Vasomed_Type,
            Systolic, Diastolic, Pulse, # this is baseline office BP
-           # V1_Systolic, V1_Diastolic, V1_Pulse, # this is screening BP
-           # Nexfin meanBRS, SDNN,
+           Total_systolic_Mean, Total_diastolic_Mean, Total_HR_Mean, # this is 24h RR
            GFR, TC, HDL, LDL, TG, 
            Energy, Fibers, Alcohol,
            Treatment_group) %>% 
@@ -47,5 +38,15 @@ table1 <- df_total %>%
     print(nonnormal = "Alcohol")
 write.csv2(table1, "results/table1.csv")
 
-tab <- df %>% select(ID, Treatment_group)
-write.csv2(tab, "data/randomisation.csv")
+## Compliance
+df_med <- readRDS("data/compliance_incl_pharmacy.RDS")
+sum <- df_med %>% group_by(Group) %>% summarise(mean = mean(Perc_pills_taken),
+                                                sd = sd(Perc_pills_taken),
+                                                median = median(Perc_pills_taken),
+                                                lowestq = quantile(Perc_pills_taken, 1/4),
+                                                highestq = quantile(Perc_pills_taken, 3/4))
+sum
+
+## Adverse events
+df_ae <- readRDS("data/adverse_events.RDS")
+df_ae

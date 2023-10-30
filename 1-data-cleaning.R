@@ -18,10 +18,12 @@ serotonin <- rio::import('data/230421_BEAM_serotonin_EDTA_tidy.xlsx')
 calprotectin <- rio::import("data/230324_BEAM_calprotectine.xlsx")
 samplelijst_calprotectin <- rio::import("data/230320_Samplelijst_FecesvoorCalprotectin.xlsx")
 inflelisa <- rio::import("data/infl_elisa_tidy_2.xlsx")
-vasomed <- read_csv2("data/BEAM_csv_export_20221219104054/BEAM_Vasoactive_medication_export_20221219.csv") %>% 
+vasomed <- read_csv2("data/BEAM_Vasoactive_medication_export_20221219.csv") %>% 
     select(ID = `Participant Id`, everything()) %>% filter(`Participant Status` == "Completed") 
 adverse_events <- read_csv2("data/BEAM_Adverse_event_export_20221219.csv") %>% 
     select(ID = `Participant Id`, AE_Description)
+med_retour <- rio::import("data/BEAM_randomisatie_medicatie_retour.xlsx") %>% 
+    select(ID = `Subject ID`, everything())
 
 # Change participant Id into ID
 df <- df %>% dplyr::select(ID = `Participant Id`, everything(.), -`V829`)
@@ -104,9 +106,9 @@ demographics <- demographics %>%
            )
 
 # checks
-any(demographics$AlcoholUse == "Yes" & demographics$AlcoholUnits == 0)
-any(demographics$AlcoholUse == "No" & demographics$AlcoholUnits != 0)
-any(demographics$BPlowMed == "Yes" & is.na(demographics$HT_years))
+any(demographics$AlcoholUse == "Yes" & demographics$AlcoholUnits == 0) # FALSE
+any(demographics$AlcoholUse == "No" & demographics$AlcoholUnits != 0, na.rm = TRUE) # NA
+any(demographics$BPlowMed == "Yes" & is.na(demographics$HT_years)) # FALSE
 
 # save dataset
 saveRDS(demographics, "data/demographics_BEAM.RDS")
@@ -449,8 +451,18 @@ names(intervention)
 saveRDS(intervention, "data/intervention.RDS")
 write.csv2(intervention, "data/intervention.csv")
 
+df_med <- left_join(med_retour %>% filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713")), 
+                     intervention, by = "ID") %>% 
+            left_join(., demographics, by = "ID") %>% 
+            mutate(Capsules_left = as.numeric(`Capsules left`),
+                Perc_pills_taken = ((788-Capsules_left)/788) *100,
+                Calculated_perc = 100-(((Total_NonCompliantDays * 26)/788)*100)
+                )
+
+saveRDS(df3, "data/compliance_incl_pharmacy.RDS")
+
 #### Adverse events ####
 str(adverse_events)
 adverse_events <- adverse_events %>% left_join(., demographics %>% select(ID, Treatment_group), by = "ID")
-saveRDS(intervention, "data/adverse_events.RDS")
-write.csv2(intervention, "data/adverse_events.csv")
+saveRDS(adverse_events, "data/adverse_events.RDS")
+write.csv2(adverse_events, "data/adverse_events.csv")
