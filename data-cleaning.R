@@ -7,41 +7,6 @@ library(ggpubr)
 library(ggsci)
 library(lubridate)
 
-# Functions
-theme_Publication <- function(base_size=12, base_family="sans") {
-    library(grid)
-    library(ggthemes)
-    (theme_foundation(base_size=base_size, base_family=base_family)
-        + theme(plot.title = element_text(face = "bold",
-                                          size = rel(1.0), hjust = 0.5),
-                #family = 'Helvetica'
-                text = element_text(),
-                panel.background = element_rect(colour = NA),
-                plot.background = element_rect(colour = NA),
-                panel.border = element_rect(colour = NA),
-                axis.title = element_text(face = "bold",size = rel(0.8)),
-                axis.title.y = element_text(angle=90,vjust =2),
-                axis.line.y = element_line(colour="black"),
-                axis.title.x = element_text(vjust = -0.2),
-                axis.text = element_text(), 
-                axis.line.x = element_line(colour="black"),
-                axis.ticks.x = element_line(),
-                axis.ticks.y = element_line(),
-                panel.grid.major = element_line(colour="#f0f0f0"),
-                panel.grid.minor = element_blank(),
-                legend.key = element_rect(colour = NA),
-                legend.position = "right",
-                # legend.direction = "horizontal",
-                legend.key.size= unit(0.2, "cm"),
-                legend.spacing  = unit(0, "cm"),
-                # legend.title = element_text(face="italic"),
-                plot.margin=unit(c(5,5,5,5),"mm"),
-                strip.background=element_rect(colour="#f0f0f0",fill="#f0f0f0"),
-                strip.text = element_text(face="bold"),
-                plot.caption = element_text(face = "italic", size=rel(0.6))
-        ))
-} 
-
 # Data
 df <- rio::import("data/BEAM_export_20221219.csv")
 fecalscfa <- rio::import("data/221201_Fecal_SCFA_tidy.xlsx") %>%
@@ -53,24 +18,23 @@ serotonin <- rio::import('data/230421_BEAM_serotonin_EDTA_tidy.xlsx')
 calprotectin <- rio::import("data/230324_BEAM_calprotectine.xlsx")
 samplelijst_calprotectin <- rio::import("data/230320_Samplelijst_FecesvoorCalprotectin.xlsx")
 inflelisa <- rio::import("data/infl_elisa_tidy_2.xlsx")
-
-## repeated measurements to be inserted here (AE and medication)
 vasomed <- read_csv2("data/BEAM_csv_export_20221219104054/BEAM_Vasoactive_medication_export_20221219.csv") %>% 
-    select(ID = `Participant Id`, everything()) %>% filter(`Participant Status` == "Completed")
-vasomed %>% filter(ID == "BEAM_909")
+    select(ID = `Participant Id`, everything()) %>% filter(`Participant Status` == "Completed") 
+adverse_events <- read_csv2("data/BEAM_Adverse_event_export_20221219.csv") %>% 
+    select(ID = `Participant Id`, AE_Description)
 
 # Change participant Id into ID
 df <- df %>% dplyr::select(ID = `Participant Id`, everything(.), -`V829`)
 names(df)
 
-# Merge with treatment allocation df and set NA values
+# Set NA values, plot missing data with Amelia missmap
 df <- df %>% naniar::replace_with_na_all(condition = ~(.x == -99 | .x == -96 | .x == -95 |
                                                   .x == -98)) %>% 
     mutate(across(where(is.character), ~ na_if(.,"")))
 Amelia::missmap(df)
 names(df)
 
-# Separate into different dataframes per datasource
+# Separate into different dataframes per data source
 demographics <- df %>% dplyr::select(ID, Sex, Age, AgeStrata, Smoking, PackYears,
                               AlcoholUse, AlcoholUnits, History_List,
                               eGFR, Date_eGFR, BPlowMed = Medication_BPlowering,
@@ -123,6 +87,7 @@ demographics <- demographics %>%
                   as.factor),
            Treatment_group = fct_relevel(Treatment_group, "Butyrate", after = 1L)) %>% 
     right_join(., bp_screening %>% dplyr::select(-visit), by = "ID") %>%
+    full_join(., vasomed, by = "ID") %>% 
     rename(V1_Systolic = Systolic, V1_Diastolic = Diastolic, V1_Pulse = Pulse) %>% 
     mutate(V2_time = hms::as_hms(lubridate::dmy_hm(V2_DateTime)),
             V4_time = hms::as_hms(lubridate::dmy_hm(V4_DateTime)),
@@ -132,117 +97,21 @@ demographics <- demographics %>%
                 V4_time <= hms::as_hms("09:00:00") ~ paste("early")
             ),
             V4_time_bin = as.factor(V4_time_bin),
-            V4_hourdiff = (V4_time - hms::as_hms("07:30:00"))/3600)
-    
+            V4_hourdiff = (V4_time - hms::as_hms("07:30:00"))/3600,
+           Vasomed_Type = fct_recode(Vasomed_Type, "Diuretics" = "DiU",
+                                      "ARB" = "ARB",
+                                      "CaAnt" = "CAD")
+           )
 
-str(demographics)
-plot(demographics)
-graphics.off()
-hist(demographics$Age)
-plot(demographics$Sex)
-plot(demographics$HT_years)
+# checks
 any(demographics$AlcoholUse == "Yes" & demographics$AlcoholUnits == 0)
 any(demographics$AlcoholUse == "No" & demographics$AlcoholUnits != 0)
 any(demographics$BPlowMed == "Yes" & is.na(demographics$HT_years))
 
+# save dataset
 saveRDS(demographics, "data/demographics_BEAM.RDS")
 write.csv2(demographics, "data/demographics_BEAM.csv")
 
-#### Home BP clean and check ####
-names(homebp)
-Amelia::missmap(homebp)
-stripnames_homebp <- function(varname) {
-    varname <- str_remove(varname, "_min_")
-    varname <- str_remove(varname, "_mmHg_")
-    varname <- str_remove(varname, "HomeBP_")
-    varname <- str_remove(varname, "Measurement_")
-    varname <- str_replace(varname, "_BP", "BP")
-    return(varname)
-}
-
-# Strip/change names for parts defined above; get rid of vars that we don't need
-homebp <- homebp %>% rename_with(., stripnames_homebp) %>% 
-    dplyr::select(!(contains("Remarks") | contains("_1_"))) %>% 
-    mutate(across(contains("Pulse") | contains("BP"), as.numeric)) %>% 
-    filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713"))
-names(homebp)
-str(homebp)
-
-# min needs to pivot separately (has no timing); dates need to pivot separately
-homebp_dates <- homebp %>% dplyr::select(ID, contains("Date"))
-homebp_nodates <- homebp %>% dplyr::select(ID, !contains("Date"), -contains("min")) 
-homebp_min <- homebp %>% dplyr::select(ID, contains("min")) %>% dplyr::select(-contains("Date"))
-
-homebp_long_min <- pivot_longer(homebp_min, cols = 2:ncol(homebp_min),
-                            names_to = c("visit", "week", "measurement", "item"),
-                            names_sep = "_",
-                            values_to = "value")
-homebp_long <- pivot_longer(homebp_nodates, cols = 2:ncol(homebp_nodates),
-                            names_to = c("visit", "week", "measurement", "timing", "item"),
-                            names_sep = "_",
-                            values_to = "value")
-
-homebp_long <- bind_rows(homebp_long, homebp_long_min)
-homebp_wider <- pivot_wider(homebp_long, id_cols = c(1:5), values_from = value,
-                            names_from = item)
-head(homebp_wider)
-
-names(homebp_dates)
-homebp_long_dates <- homebp_dates %>% 
-    rename_with(., ~ str_remove_all(.x, "_Date")) %>% 
-    pivot_longer(homebp_dates, cols = 2:ncol(homebp_dates),
-                 names_to = c("visit", "week", "measurement", "timing"),
-                 names_sep = "_",
-                 values_to = "date") %>% 
-    dplyr::select(-measurement, -visit) %>% 
-    distinct()
-head(homebp_long_dates)
-
-homebp_summary_pertime <- homebp_wider %>% group_by(ID, week, timing) %>% 
-    summarise(mean_sbp = mean(SystolicBP, na.rm = TRUE), 
-              mean_dbp = mean(DiastolicBP, na.rm = TRUE),
-              mean_pulse = mean(Pulse, na.rm = TRUE))
-head(homebp_summary_pertime)
-homebp_summary_perday <- homebp_summary_pertime %>% group_by(ID, week) %>% 
-    summarise(mean_sbp = mean(mean_sbp, na.rm = TRUE), 
-              mean_dbp = mean(mean_dbp, na.rm = TRUE),
-              mean_pulse = mean(mean_pulse, na.rm = TRUE)) %>% 
-    ungroup()
-head(homebp_summary_perday)
-
-homebp_long_dates_morning <- homebp_long_dates %>% filter(timing == "morning" | is.na(timing)) %>% 
-    dplyr::select(-timing)
-head(homebp_long_dates_morning)
-
-homebp_total_pertime <- right_join(homebp_summary_pertime, homebp_long_dates, 
-                           by = c("ID", "week", "timing")) %>% 
-                        mutate(date = lubridate::dmy(date),
-                               timing = as.factor(timing),
-                               week = case_when(
-                                   str_detect(week, "min") ~ str_replace(week, "min", "-"),
-                                   str_detect(week, "week") ~ str_replace(week, "week", "")
-                               ),
-                               week = as.numeric(week)) %>% 
-                        arrange(ID, date)
-head(homebp_total_pertime)
-
-saveRDS(homebp_total_pertime, "data/homebp_pertime_BEAM.RDS")
-write.csv2(homebp_total_pertime, "data/homebp_pertime_BEAM.csv")
-
-homebp_total_perweek <- right_join(homebp_summary_perday, 
-                                   homebp_long_dates_morning, 
-                                   by = c("ID", "week")) %>% 
-                        mutate(date = lubridate::dmy(date),
-                               week = case_when(
-                                   str_detect(week, "min") ~ str_replace(week, "min", "-"),
-                                   str_detect(week, "week") ~ str_replace(week, "week", "")
-                               ),
-                               week = as.numeric(week)) %>% 
-                        arrange(ID, date) 
-head(homebp_total_perweek)
-
-saveRDS(homebp_total_perweek, "data/homebp_perweek_BEAM.RDS")
-write.csv2(homebp_total_perweek, "data/homebp_perweek_BEAM.csv")
 
 #### ABPM clean and check ####
 names(abpm)
@@ -413,33 +282,6 @@ plot(officebp_summary[,3:ncol(officebp_summary)])
 saveRDS(officebp_summary, "data/officebp_summary.RDS")
 write.csv2(officebp_summary, "data/officebp_summary.csv")
 
-#### PBMC ####
-str(pbmc)
-pbmc %>% dplyr::select(contains("Reason"))
-pbmc_sel <- pbmc %>% dplyr::select(ID, contains("Cellcount"), contains("Cryovials")) %>% 
-    filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713"))
-pbmc_sel
-
-pbmc_long <- pivot_longer(pbmc_sel, cols = 2:ncol(pbmc_sel), names_sep = "_",
-                          names_to = c("visit", "drop", "variable"), values_to = "value") %>% 
-            dplyr::select(-drop) %>% 
-            pivot_wider(., id_cols = 1:2, names_from = "variable", values_from = "value") %>% 
-            dplyr::select(-Cryovials) %>% 
-            mutate(Residual_count = Cellcount -3)
-head(pbmc_long)
-
-nrow(pbmc_long[which(pbmc_long$Residual_count < 15),]) / nrow(pbmc_long)
-
-gghistogram(pbmc_long$Residual_count, bins = 15, fill = pal_jama()(1)) + theme_Publication() +
-    xlab("Cell count vial #4") +
-    ggtitle("PBMC cell count vial 4") +
-    geom_vline(xintercept = 15, color = pal_jama()(2)[2], size = 1.0) +
-    scale_x_continuous(n.breaks = 6)
-ggsave("results/pbmc/cellcountvial4.pdf", width = 5, height = 5)
-
-saveRDS(pbmc_long, "data/pbmc_storage.RDS")
-write.csv2(pbmc_long, "data/pbmc_storage.csv")
-
 #### Lab ####
 str(lab)
 print(lab %>% dplyr::select(contains("Remarks")), n=24)
@@ -477,6 +319,19 @@ calprotectin <- left_join(calprotectin, samplelijst_calprotectin, by = "BARCODE"
 calprotectin <- calprotectin %>% select(ID, visit, calprotectin_ug_g = UITSLAG)
 saveRDS(calprotectin, "data/calprotectin.RDS")
 write.csv2(calprotectin, "data/calprotectin.csv")
+
+reninaldo <- reninaldo %>% dplyr::select(Sample_ID, ID = Subject_ID, Renin = Kolom1, 
+                                         Aldosterone = Kolom2) %>% 
+    mutate(visit = str_extract(Sample_ID, "V[0-9]")) %>% 
+    filter(str_detect(ID, "BEAM"))
+saveRDS(reninaldo, "data/reninaldo.RDS")
+write.csv2(reninaldo, "data/reninaldo.csv")
+
+inflelisa <- inflelisa %>% select(SampleID = ID, everything(.)) %>% 
+    mutate(visit = str_extract(SampleID, "V[0-9]"),
+           ID = str_extract(SampleID, "BEAM_[0-9]*"))
+saveRDS(inflelisa, "data/inflelisa.RDS")
+write.csv2(inflelisa, "data/inflelisa.csv")
 
 #### BIA ####
 str(bia)
@@ -555,22 +410,34 @@ print(urine, n = 63)
 saveRDS(urine, "data/urinesamples.RDS")
 write.csv2(urine, "data/urinesamples.csv")
 
-#### Renin aldo ####
-reninaldo <- reninaldo %>% dplyr::select(Sample_ID, ID = Subject_ID, Renin = Kolom1, 
-                                  Aldosterone = Kolom2) %>% 
-    mutate(visit = str_extract(Sample_ID, "V[0-9]")) %>% 
-    filter(str_detect(ID, "BEAM"))
-saveRDS(reninaldo, "data/reninaldo.RDS")
-write.csv2(reninaldo, "data/reninaldo.csv")
+#### PBMC ####
+str(pbmc)
+pbmc %>% dplyr::select(contains("Reason"))
+pbmc_sel <- pbmc %>% dplyr::select(ID, contains("Cellcount"), contains("Cryovials")) %>% 
+    filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713"))
+pbmc_sel
 
-#### Infl ELISAs ####
-inflelisa <- inflelisa %>% select(SampleID = ID, everything(.)) %>% 
-    mutate(visit = str_extract(SampleID, "V[0-9]"),
-           ID = str_extract(SampleID, "BEAM_[0-9]*"))
-saveRDS(inflelisa, "data/inflelisa.RDS")
-write.csv2(inflelisa, "data/inflelisa.csv")
+pbmc_long <- pivot_longer(pbmc_sel, cols = 2:ncol(pbmc_sel), names_sep = "_",
+                          names_to = c("visit", "drop", "variable"), values_to = "value") %>% 
+    dplyr::select(-drop) %>% 
+    pivot_wider(., id_cols = 1:2, names_from = "variable", values_from = "value") %>% 
+    dplyr::select(-Cryovials) %>% 
+    mutate(Residual_count = Cellcount -3)
+head(pbmc_long)
 
-#### Intervention ####
+nrow(pbmc_long[which(pbmc_long$Residual_count < 15),]) / nrow(pbmc_long)
+
+gghistogram(pbmc_long$Residual_count, bins = 15, fill = pal_jama()(1)) + theme_Publication() +
+    xlab("Cell count vial #4") +
+    ggtitle("PBMC cell count vial 4") +
+    geom_vline(xintercept = 15, color = pal_jama()(2)[2], size = 1.0) +
+    scale_x_continuous(n.breaks = 6)
+ggsave("results/pbmc/cellcountvial4.pdf", width = 5, height = 5)
+
+saveRDS(pbmc_long, "data/pbmc_storage.RDS")
+write.csv2(pbmc_long, "data/pbmc_storage.csv")
+
+#### Capsules ####
 str(intervention)
 print(intervention %>% dplyr::select(ID, contains("Remarks")))
 intervention <- intervention %>% dplyr::select(ID, !(contains("Checks") | contains("Remarks"))) %>% 
@@ -582,3 +449,7 @@ names(intervention)
 saveRDS(intervention, "data/intervention.RDS")
 write.csv2(intervention, "data/intervention.csv")
 
+#### Adverse events ####
+str(adverse_events)
+adverse_events <- adverse_events %>% left_join(., demographics %>% select(ID, Treatment_group), by = "ID")
+print(adverse_events)
