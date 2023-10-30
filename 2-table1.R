@@ -18,7 +18,7 @@ df_total <- right_join(officebp, df, by = "ID") %>%
                 right_join(lab, ., by = "ID") %>% 
                 right_join(diet, ., by = "ID") %>% 
                 right_join(abpm, ., by = "ID") %>% 
-                filter(! ID %in% c("BEAM_664")) %>%  # this participant did not get randomized
+                filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713")) %>% 
                 ungroup()
 
 # Table 1
