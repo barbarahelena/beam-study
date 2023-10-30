@@ -1,4 +1,4 @@
-## Composition plots
+## Composition plot at genus level
 ## Barbara Verhaar, b.j.verhaar@amsterdamumc.nl
 
 ## Libraries
@@ -88,119 +88,9 @@ clindf <- clindf %>% mutate(
 tab <- (tab / rarefaction_level) * 100
 rowSums(tab) # samples should all sum up to 100%
 
-# get group metadata
 
-# How many features to plot
+#### Genus-level ####
 N <- 20
-# convert to long format
-dftotal <- tab %>% 
-    rownames_to_column(var = 'Sample') %>% 
-    pivot_longer(-Sample, names_to = 'ASV', values_to = 'Abundance') %>% 
-    mutate(sampleID = Sample) %>% 
-    left_join(., clindf)
-# add species taxonomy (including ambiguous)
-dftotal$Species <- tax$Tax[match(dftotal$ASV, tax$ASV)]
-dftotal$Species
-
-top_taxa <- dftotal %>% 
-    group_by(ASV) %>% 
-    summarise(Abund = sum(Abundance)) %>% 
-    arrange(-Abund) %>% 
-    dplyr::select(ASV) %>% 
-    head(N) %>% 
-    unlist()
-top_taxa
-
-# summarize abundance per group for this tax level
-dx <- dftotal %>% 
-    group_by(Treatment_group, before_after, ASV) %>% 
-    summarise(Abundance = mean(Abundance))
-
-dx %>% group_by(Treatment_group, before_after) %>% summarize(x = sum(Abundance))
-dx$Tax <- tax$Tax[match(dx$ASV, tax$ASV)]
-top_taxa_tax <- tax$Tax[match(top_taxa, tax$ASV)]
-
-p1 <- dx %>% 
-    filter(ASV %in% top_taxa) %>% 
-    mutate(Tax = factor(Tax, levels = rev(make.unique(top_taxa_tax)))) %>% 
-    ggplot(aes(x = before_after, y = Abundance, fill = Tax)) +
-    geom_bar(stat = "identity", color = 'black') +
-    scale_fill_manual(values = rev(cols)) +
-    theme_bw() +
-    labs(y="Composition (%)", x = "", title = "Composition (ASV level)") +
-    scale_y_continuous(expand = c(0, 0)) +
-    theme_composition() +
-    theme(strip.text.x = element_text(size = 16),
-          axis.text.x = element_text(angle = 45, hjust = 1)) +
-    facet_wrap(~Treatment_group)
-
-p1
-save_function(p1, "composition_ASV", height = 7, width = 7)
-
-
-## Species-level
-
-# How many features to plot
-N <- 20
-# convert to long format
-d <- tab %>% 
-    rownames_to_column(var = 'Sample') %>% 
-    pivot_longer(-Sample, names_to = 'ASV', values_to = 'Abundance') %>% 
-    mutate(sampleID = Sample) %>% 
-    left_join(., clindf)
-# add species taxonomy (including ambiguous)
-d$Species <- tax$Tax[match(d$ASV, tax$ASV)]
-# remove amiguous species
-d$Species[str_detect(d$Species, 'spp.')] <- 'ambiguous'
-
-top_taxa <- d %>% 
-    group_by(Species) %>% 
-    summarize(Abund = sum(Abundance)) %>% 
-    arrange(-Abund) %>% 
-    dplyr::select(Species) %>% 
-    filter(Species != 'ambiguous') %>% 
-    head(N) %>% 
-    unlist()
-top_taxa
-
-d %>% group_by(Sample) %>% summarize(x = sum(Abundance))
-
-# summarize abundance per group for this tax level
-dx <- d %>% 
-    group_by(Treatment_group, before_after, ASV) %>% 
-    summarise(Abundance = mean(Abundance))
-dx$Species <- d$Species[match(dx$ASV, d$ASV)] # add curated taxonomy
-
-dx <- dx %>% 
-    mutate(Tax = ifelse(str_detect(Species, 'spp.'), 'ambiguous', Species)) %>% # 
-    group_by(Tax, Treatment_group, before_after) %>% 
-    summarise(Abundance = sum(Abundance))
-
-# check
-dx %>% group_by(Treatment_group, before_after)  %>% summarize(x = sum(Abundance))
-head(dx)
-# keep only top N
-top_taxa
-p2 <- dx %>% 
-    filter(Tax %in% top_taxa) %>% 
-    mutate(Tax = factor(Tax, levels = rev(make.unique(top_taxa)))) %>% 
-    ggplot(aes(x = before_after, y = Abundance, fill = Tax)) +
-    geom_bar(stat = "identity", color = 'black') +
-    scale_fill_manual(values = rev(cols)) +
-    labs(y="Composition (%)", x = "", title = "Composition (species level)") +
-    scale_y_continuous(expand = c(0, 0)) +
-    theme_composition() +
-    theme(strip.text.x = element_text(size = 16),
-          axis.text.x = element_text(angle = 45, hjust = 1)) +
-    facet_wrap(~Treatment_group)
-
-p2
-save_function(p2, "composition_species", height = 7, width = 7)
-
-## Genus-level #############
-
-# How many features to plot
-# N <- 20
 # convert to long format
 d <- tab %>% 
     rownames_to_column(var = 'Sample') %>% 
@@ -254,13 +144,10 @@ dx <- dx %>% mutate(
 
 lev <- levels(dx$Genus2)
 lev
-# lev[17] <- "**Phascolarctobacterium**"
-# lev[21] <- "**Subdoligranulum**"
-# 
 dx <- dx %>% group_by(Treatment_group, before_after, Genus2) %>% summarise(Abundance2 = sum(Abundance))
 
 # library(ggtext)
-p3 <- dx %>% 
+comp_genus <- dx %>% 
     #filter(Genus %in% top_taxa) %>% 
     #mutate(Tax = factor(Genus, levels = rev(make.unique(top_taxa)))) %>% 
     ggplot(aes(x = before_after, y = Abundance2, fill = Genus2)) +
@@ -275,6 +162,6 @@ p3 <- dx %>%
         axis.text.x =  element_text(angle = 45, hjust = 1)
         )+
     facet_wrap(~Treatment_group)
-p3
-save_function(p3, "composition_genus", width = 7, height = 7)
+comp_genus
+save_function(comp_genus, "composition_genus", width = 7, height = 7)
 

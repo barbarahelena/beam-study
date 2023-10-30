@@ -347,7 +347,7 @@ r5 <- adonis2(brayv5 ~ Treatment_group, data = nestdf$data[[1]])
 # res <- adonis(bray ~ Age + Sex + Treatment_group, data = clindf2) 
 
 ## Bray curtis with PERMANOVA annotation
-pl <- dbray %>% 
+pl_bray <- dbray %>% 
     ggplot(aes(Axis.1, Axis.2)) +
     scale_fill_nejm() +
     geom_point(aes(color = group), size = 2) +
@@ -358,7 +358,7 @@ pl <- dbray %>%
     scale_color_lancet() +
     guides(fill = guide_legend(override.aes = list(shape = 21, size = 2))) +
     stat_ellipse(aes(color = group), type = "norm")
-pl <- pl + annotate("text", x = 0.2, y = 0.4, label = paste0("PERMANOVA p = ", res$aov.tab[3,6]))
+pl_bray <- pl_bray + annotate("text", x = 0.2, y = 0.4, label = paste0("PERMANOVA p = ", res$aov.tab[3,6]))
 
 ggsave("results/PCA_BrayCurtis_permanova.pdf", device = "pdf", width = 6, height = 5)
 
@@ -368,7 +368,7 @@ shannon <- vegan::diversity(asvtab@otu_table, index = 'shannon')
 df_shan <- data.frame(sampleID = names(shannon), shannon = shannon)
 df_shan <- left_join(df_shan, clindf, by = "sampleID")
 
-(pl4 <- ggplot(data = df_shan, aes(x = Treatment_group, y = shannon, 
+(shannon_violin <- ggplot(data = df_shan, aes(x = Treatment_group, y = shannon, 
                                   fill = Treatment_group)) +
     geom_violin() +
     geom_boxplot(width = 0.1, fill = "white", outlier.shape = NA) +
@@ -377,7 +377,7 @@ df_shan <- left_join(df_shan, clindf, by = "sampleID")
     labs(title = "Shannon alpha diversity", y = "Shannon index", x="") +
     stat_compare_means(method = "wilcox.test", label = "p.format", hide.ns = TRUE) +
     facet_wrap(~before_after))
-save_function(pl4, "shannondiversity", width = 6, height = 5)
+save_function(shannon_violin, "shannondiversity", width = 6, height = 5)
 
 shan_lmm <- linearmixed_div(df_shan, shannon)
 shan_means <- df_shan %>% 
@@ -404,47 +404,6 @@ shan_means <- df_shan %>%
         labs(x = "Weeks", y = "Shannon index", title = "Shannon diversity",
              color = ""))
 save_function(plot_shan, "shannon_lmm")
-
-# Richness (ASV / Species)
-richness <- vegan::specnumber(asvtab@otu_table)
-dfveg <- data.frame(sampleID = names(richness), richness = richness)
-dfveg <- left_join(dfveg, clindf, by = "sampleID")
-
-(richnesspl <- ggplot(data = dfveg, aes(x = Treatment_group, y = richness, fill = Treatment_group)) +
-    geom_violin()+
-    geom_boxplot(outlier.shape = NA, fill = "white", width = 0.1) +
-    theme_Publication() + 
-    scale_fill_jama(guide = FALSE) + 
-    labs(title = "Species richness", y = "Number of species", x = "") +
-    stat_compare_means(method = "wilcox.test", label = "p.format") +
-    facet_wrap(~before_after))
-save_function(richnesspl, "richness", width = 6, height = 5)
-
-rich_lmm <- linearmixed_div(dfveg, richness)
-rich_means <- dfveg %>% 
-    group_by(Treatment_group, weeks) %>% 
-    summarise(mean = mean(richness), sd = sd(richness), n = length(richness))
-
-(plot_rich <- ggplot() +
-        geom_rect(aes(xmin = 0, xmax = 4, ymin = 100, ymax = 305),
-                  fill = "#CDCDCD", alpha = 0.3) +
-        geom_line(data = rich_means, aes(x = weeks, y = mean, 
-                                         color = Treatment_group, group = Treatment_group), alpha = 1) +
-        geom_line(data = dfveg, aes(x = weeks, y = richness,
-                                    color = Treatment_group, group = ID), alpha = 0.2) +
-        geom_errorbar(data = rich_means,
-                      aes(ymin = mean - (sd/sqrt(n)),
-                          ymax = mean + (sd/sqrt(n)),
-                          x = weeks,
-                          color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(rich_lmm, y.position = 275, label = "p = {pval}", 
-                           remove.bracket = TRUE, bracket.size = 0) +
-        scale_color_jama() + 
-        scale_y_continuous(limits = c(100,305), breaks = seq(from = 100, to = 300, by = 25)) +
-        theme_Publication() +
-        labs(x = "Weeks", y = "Richness", title = "Richness",
-             color = ""))
-save_function(plot_rich, "richness_lmm")
 
 # Faith's PD
 faith <- picante::pd(asvtab@otu_table, tree = asvtab@phy_tree)
@@ -486,12 +445,9 @@ faith_means <- dffai %>%
         theme_Publication() +
         labs(x = "Weeks", y = "Faith's PD", title = "Faith's PD",
              color = ""))
-
 save_function(plot_faith, "faith_pd_lmm")
 
-ggarrange(p3, pl, pl4, labels = c("A", "B", "C"))
-
-
-compalphabeta <- ggarrange(p3, pl, pl4, faithviolin, labels = c("A", "B", "C", "D"))
-save_function(compalphabeta, "compalphabeta_violin", width = 12, height = 11)
+compalphabeta <- ggarrange(comp_genus, pl_bray, shannon_violin, faithviolin, 
+                           labels = c("A", "B", "C", "D"))
+save_function(compalphabeta, "compalphabeta", width = 12, height = 11)
 

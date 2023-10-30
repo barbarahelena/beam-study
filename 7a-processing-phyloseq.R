@@ -1,4 +1,4 @@
-## 16S analyses
+## Processingn 16S data
 ## Barbara Verhaar
 
 ## libraries
@@ -37,14 +37,6 @@ tree <- ape::read.tree('data/ASVs.msa.treefile')
 tree_rooted <- phytools::midpoint.root(tree)
 
 asvtab@phy_tree <- tree_rooted
-
-sample_sums(asvtab)
-asvtab
-lactobac_filter <- asvtab@tax_table[which(str_detect(gen@tax_table[,"Family"], "Lactobacillaceae"))]
-rownames(lactobac_filter)
-lactobac <- c("ASV_0089", "ASV_0090")
-gen3 = subset_taxa(asvtab, Genus %in% "Lactobacillus")
-saveRDS(gen3, 'results/phyloseq_BEAM_lactobacillus.RDS')
 
 saveRDS(asvtab, 'results/phyloseq_BEAM.RDS')
 
