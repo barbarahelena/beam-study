@@ -89,23 +89,7 @@ save_function <- function(plot, name){
 
 
 #### Data ####
-df <- readRDS("data/demographics_BEAM.RDS") %>% 
-    mutate(V2_time = hms::as_hms(lubridate::dmy_hm(V2_DateTime)),
-           V4_time = hms::as_hms(lubridate::dmy_hm(V4_DateTime)),
-           V5_time = hms::as_hms(lubridate::dmy_hm(V5_datetime)),
-           V4_time_bin = case_when(
-               V4_time > hms::as_hms("09:00:00") ~ paste("late"),
-               V4_time <= hms::as_hms("09:00:00") ~ paste("early")
-           ),
-           V4_time_bin = as.factor(V4_time_bin),
-           V4_hourdiff = (V4_time - hms::as_hms("07:30:00"))/3600)
-
-df2 <- df %>% pivot_longer(., cols = 25:27,
-                 names_to = c("visit", "rest"),
-                 names_sep = "_",
-                 values_to = "time") %>% 
-    dplyr::select(-rest)
-    
+df <- readRDS("data/demographics_BEAM.RDS")
 serotonin <- readRDS("data/serotonin.RDS")
 
 #### Dataset for serotonin analysis ####
@@ -133,7 +117,6 @@ df_means <- df_serotonin %>%
                  .names = "{.col}_{.fn}"))
 
 #### Serotonin plot with LMM ####
-serotonin_lm <- c()
 serotonin_lm <- df_serotonin %>% linearmixed_stn(serotonin_uM) %>% filter(p_signif != "")
 
 (plot_serotonin <- ggplot() +
@@ -148,8 +131,8 @@ serotonin_lm <- df_serotonin %>% linearmixed_stn(serotonin_uM) %>% filter(p_sign
                           ymax = serotonin_uM_mean + (serotonin_uM_sd/sqrt(serotonin_uM_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
-        # stat_pvalue_manual(serotonin_lm, y.position = 15, label = "p_signif", 
-        #                    remove.bracket = TRUE, bracket.size = 0) +
+        stat_pvalue_manual(serotonin_lm, y.position = 15, label = "p_signif",
+                           remove.bracket = TRUE, bracket.size = 0) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(0,16), breaks = seq(from = 0, to = 16, by = 1)) +
         theme_Publication() +
@@ -157,7 +140,6 @@ serotonin_lm <- df_serotonin %>% linearmixed_stn(serotonin_uM) %>% filter(p_sign
 
 save_function(plot_serotonin, "plasma_serotonin")
 
-logstn_lm <- c()
 logstn_lm <- df_serotonin %>% linearmixed_stn(log_stn)
 
 (plot_log_serotonin <- ggplot() +

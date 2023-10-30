@@ -459,7 +459,7 @@ df_med <- left_join(med_retour %>% filter(!ID %in% c("BEAM_299", "BEAM_664", "BE
                 Calculated_perc = 100-(((Total_NonCompliantDays * 26)/788)*100)
                 )
 
-saveRDS(df3, "data/compliance_incl_pharmacy.RDS")
+saveRDS(df_med, "data/compliance_incl_pharmacy.RDS")
 
 #### Adverse events ####
 str(adverse_events)
