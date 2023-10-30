@@ -452,4 +452,5 @@ write.csv2(intervention, "data/intervention.csv")
 #### Adverse events ####
 str(adverse_events)
 adverse_events <- adverse_events %>% left_join(., demographics %>% select(ID, Treatment_group), by = "ID")
-print(adverse_events)
+saveRDS(intervention, "data/adverse_events.RDS")
+write.csv2(intervention, "data/adverse_events.csv")
