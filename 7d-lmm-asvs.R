@@ -137,6 +137,7 @@ statres <- statres %>% arrange(pval, group1) %>%
 head(statres, n = 20)
 maxsig <- statres %>% filter(pval <= 0.05) %>% nrow(.)
 
+plist <- list()
 for(i in 1:maxsig){
     taxname <- statres$tax[i]
     pval <- statres$pval[i]
@@ -145,9 +146,9 @@ for(i in 1:maxsig){
     df_means <- df_tot %>% group_by(Treatment_group, weeks) %>% 
         summarise(mean = mean(asv), sd = sd(asv), n = length(asv))
     res_lmm <- statres %>% filter(tax == taxname) %>% dplyr::select(-asvname)
-    ymax <- max(df_tot$asv)*1.1
+    asvmax <- max(df_tot$asv*1.1)
     pl2 <- ggplot() +
-        geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = ymax),
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = asvmax),
                   fill = "#CDCDCD", alpha = 0.3) +
         geom_line(data = df_means, aes(x = weeks, y = mean, 
                     color = Treatment_group, group = Treatment_group), alpha = 1) +
@@ -158,15 +159,20 @@ for(i in 1:maxsig){
                           ymax = mean + (sd/sqrt(n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(res_lmm, y.position = ymax*0.67, label = "{sig}",
+        stat_pvalue_manual(res_lmm, y.position = asvmax*0.67, label = "{sig}",
                            remove.bracket = TRUE) +
         scale_color_jama() + 
-        scale_y_continuous(limits = c(0,ymax)) +
+        coord_cartesian(ylim = c(0,asvmax)) +
         theme_Publication() +
         labs(x = "Weeks", y = "log2(counts)", title = taxname,
              color = "")
-    ggsave(pl2, filename = str_c("results/16S/lmer/lm_asv_", asvnumber, ".pdf"),
-           device = "pdf", width = 4, height = 5)
+        plist[[i]] <- pl2
 }
 
+(plots <- ggarrange(plotlist = plist, common.legend = TRUE, legend = "bottom",
+          labels = LETTERS[1:14],
+          nrow = 5, ncol = 3))
+ggsave(plots, filename = "results/16S/lmer/lmer_plots.pdf", width = 10, height = 16)
+ggsave(plots, filename = "results/16S/lmer/lmer_plots.png", width = 10, height = 16)
+ggsave(plots, filename = "results/16S/lmer/lmer_plots.svg", width = 10, height = 16)
 write.csv2(statres, "results/16S/lmer/lmm_results.csv")
