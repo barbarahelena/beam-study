@@ -87,7 +87,9 @@ demographics <- demographics %>%
         AlcoholUse == 0 ~ paste0("No"))) %>% 
     mutate(across(c("Sex", "Smoking", "BPlowMed", "AlcoholUse", "Treatment_group"), 
                   as.factor),
-           Treatment_group = fct_relevel(Treatment_group, "Butyrate", after = 1L)) %>% 
+           Treatment_group = fct_relevel(Treatment_group, "Butyrate", after = 1L),
+           Sex = fct_relevel(Sex, "Male", after = 0L),
+           Smoking = fct_relevel(Smoking, "Never", after = 0L)) %>% 
     right_join(., bp_screening %>% dplyr::select(-visit), by = "ID") %>%
     full_join(., vasomed, by = "ID") %>% 
     rename(V1_Systolic = Systolic, V1_Diastolic = Diastolic, V1_Pulse = Pulse) %>% 

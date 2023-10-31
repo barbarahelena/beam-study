@@ -26,8 +26,7 @@ table1 <- df_total %>%
     select(Age, Sex, BMI, Smoking, 
            BPlowMed, 
            Vasomed_Type,
-           Systolic, Diastolic, Pulse, # this is baseline office BP
-           Total_systolic_Mean, Total_diastolic_Mean, Total_HR_Mean, # this is 24h RR
+           Systolic, Diastolic, Pulse, 
            GFR, TC, HDL, LDL, TG, 
            Energy, Fibers, Alcohol,
            Treatment_group) %>% 
