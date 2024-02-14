@@ -68,12 +68,13 @@ linearmixed <- function(data, var){
     
     statres <- rbind(statres_line1, statres_line2)
     statres <- tibble::as_tibble(statres)
-    statres$p_signif <- case_when(
+    statres$p.signif <- case_when(
         statres$pval < 0.001 ~paste0("***"),
         statres$pval < 0.01 ~paste0("**"),
         statres$pval < 0.05 ~paste0("*"),
         statres$pval >= 0.05 ~paste0("")
     )
+    statres <- statres %>% filter(p.signif != "")
     return(statres)
 }
 
@@ -111,12 +112,13 @@ linearmixed_office <- function(data, var){
     
     statres <- rbind(statres_line0, statres_line1, statres_line2)
     statres <- tibble::as_tibble(statres)
-    statres$p_signif <- case_when(
+    statres$p.signif <- case_when(
         statres$pval < 0.001 ~paste0("***"),
         statres$pval < 0.01 ~paste0("**"),
         statres$pval < 0.05 ~paste0("*"),
         statres$pval >= 0.05 ~paste0("")
     )
+    statres <- statres %>% filter(p.signif != "")
     return(statres)
 }
 linearmixed_homebp <- function(data, var){
@@ -136,12 +138,13 @@ linearmixed_homebp <- function(data, var){
     }
     
     statres <- tibble::as_tibble(statres)
-    statres$p_signif <- case_when(
+    statres$p.signif <- case_when(
         statres$pval < 0.001 ~paste0("***"),
         statres$pval < 0.01 ~paste0("**"),
         statres$pval < 0.05 ~paste0("*"),
         statres$pval >= 0.05 ~paste0("")
     )
+    statres <- statres %>% filter(p.signif != "")
     return(statres)
 }
 
@@ -172,7 +175,7 @@ covariates <- right_join(bia,
                                     by = c("ID", "visit")),
                             by = c("ID", "visit"))
 df_total <- right_join(abpm, right_join(covariates, df, by = "ID"), by= c("ID", "visit")) %>% 
-    filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713")) %>% 
+    filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713")) %>%
     mutate(visit = as.factor(visit), 
            weeks = case_when(
                visit == "V2" ~ paste0(0),
@@ -190,13 +193,13 @@ df_means <- df_total %>%
            Total_PP_Mean, Awake_PP_Mean, Asleep_PP_Mean,
            weeks, Treatment_group) %>% 
     group_by(Treatment_group, weeks) %>% 
-    summarise(across(contains("Mean"), list(mean = mean, sd = sd), .names = "{.col}_{.fn}"))
+    summarise(across(contains("Mean"), list(mean = mean, sd = sd, n = length), .names = "{.col}_{.fn}"))
 
 ## LMMs ABPM
-totsys_lm <- df_total %>% linearmixed(Total_systolic_Mean)
-awsys_lm <- df_total %>% linearmixed(Awake_systolic_Mean)
-aslsys_lm <- df_total %>% linearmixed(Asleep_systolic_Mean)
-totdia_lm <- df_total %>% linearmixed(Total_diastolic_Mean)
+(totsys_lm <- df_total %>% linearmixed(Total_systolic_Mean))
+(awsys_lm <- df_total %>% linearmixed(Awake_systolic_Mean))
+(aslsys_lm <- df_total %>% linearmixed(Asleep_systolic_Mean))
+(totdia_lm <- df_total %>% linearmixed(Total_diastolic_Mean))
 (awdia_lm <- df_total %>% linearmixed(Awake_diastolic_Mean))
 (asldia_lm <- df_total %>% linearmixed(Asleep_diastolic_Mean))
 (totp_lm <- df_total %>% linearmixed(Total_HR_Mean))
@@ -212,99 +215,116 @@ totdia_lm <- df_total %>% linearmixed(Total_diastolic_Mean)
 (plota <- ggplot() +
     geom_rect(aes(xmin = 0, xmax = 4, ymin = 90, ymax = 170), 
               fill = "#CDCDCD", alpha = 0.3) +
+    geom_line(data = df_total, aes(x = weeks, y = Total_systolic_Mean,
+                                   color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+    geom_point(data = df_total, aes(x = weeks, y = Total_systolic_Mean,
+                                    color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
     geom_line(data = df_means, aes(x = weeks, y = Total_systolic_Mean_mean, 
-                                   color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
-    # geom_line(data = df_total, aes(x = weeks, y = Total_systolic_Mean,
-    #                                color = Treatment_group, group = ID), alpha = 0.2) +
+                                   color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+    geom_point(data = df_means, aes(x = weeks, y = Total_systolic_Mean_mean, 
+                                    color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
     geom_errorbar(data = df_means,
-                  aes(ymin = Total_systolic_Mean_mean - (Total_systolic_Mean_sd/sqrt(11)),
-                      ymax = Total_systolic_Mean_mean + (Total_systolic_Mean_sd/sqrt(11)),
+                  aes(ymin = Total_systolic_Mean_mean - (Total_systolic_Mean_sd/sqrt(Total_systolic_Mean_n)),
+                      ymax = Total_systolic_Mean_mean + (Total_systolic_Mean_sd/sqrt(Total_systolic_Mean_n)),
                       x = weeks,
-                      color = Treatment_group), width=0.1, linewidth = 0.75) +
-    stat_pvalue_manual(totsys_lm, y.position = 150, label = "p_signif", 
-                       remove.bracket = TRUE, bracket.size = 0) +
+                      color = Treatment_group), width=0.1, linewidth = 0.8) +
+    stat_pvalue_manual(totsys_lm, y.position = 160, label = "p.signif", 
+                       tip.length = 0, bracket.shorten = 0.1, size = 5, hide.ns = TRUE) +
     scale_color_jama() + 
     scale_y_continuous(limits = c(90,170), breaks = seq(from = 90, to = 170, by = 10)) +
     theme_Publication() +
     labs(x = "Weeks", y = "Systolic BP (mmHg)", title = "Average systolic BP", 
-         color = "Treatment"))
+         color = ""))
 
 (plotb <- ggplot() +
-    geom_rect(aes(xmin = 0, xmax = 4, ymin = 90, ymax = 170), 
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 90, ymax = 170), 
                   fill = "#CDCDCD", alpha = 0.3) +
-    geom_line(data = df_means, aes(x = weeks, y = Awake_systolic_Mean_mean, 
-                                   color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
-    # geom_line(data = df_total, aes(x = weeks, y = Awake_systolic_Mean,
-    #                                color = Treatment_group, group = ID), alpha = 0.2) +
-    geom_errorbar(data = df_means,
-                  aes(ymin = Awake_systolic_Mean_mean - (Awake_systolic_Mean_sd/sqrt(11)),
-                      ymax = Awake_systolic_Mean_mean + (Awake_systolic_Mean_sd/sqrt(11)),
-                      x = weeks,
-                      color = Treatment_group), width=0.1, linewidth = 0.75) +
-    stat_pvalue_manual(awsys_lm, y.position = 150, label = "p_signif", 
-                       remove.bracket = TRUE, bracket.size = 0, size = 5) +
-    scale_color_jama() + 
-    scale_y_continuous(limits = c(90,170), breaks = seq(from = 90, to = 170, by = 10)) +
-    theme_Publication() +
-    labs(x = "Weeks", y = "Systolic BP (mmHg)", title = "Daytime systolic BP",
-         color = "Treatment"))
+        geom_line(data = df_total, aes(x = weeks, y = Awake_systolic_Mean,
+                                       color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+        geom_point(data = df_total, aes(x = weeks, y = Awake_systolic_Mean,
+                                        color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
+        geom_line(data = df_means, aes(x = weeks, y = Awake_systolic_Mean_mean, 
+                                     color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+        geom_point(data = df_means, aes(x = weeks, y = Awake_systolic_Mean_mean, 
+                                        color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
+        geom_errorbar(data = df_means,
+                      aes(ymin = Awake_systolic_Mean_mean - (Awake_systolic_Mean_sd/sqrt(Awake_systolic_Mean_n)),
+                          ymax = Awake_systolic_Mean_mean + (Awake_systolic_Mean_sd/sqrt(Awake_systolic_Mean_n)),
+                          x = weeks,
+                          color = Treatment_group), width=0.1, linewidth = 0.8) +
+        stat_pvalue_manual(awsys_lm, y.position = 165, label = "p.signif", 
+                           tip.length = 0, bracket.shorten = 0.1, size = 5, hide.ns = TRUE) +
+        scale_color_jama() + 
+        scale_y_continuous(limits = c(90,170), breaks = seq(from = 90, to = 170, by = 10)) +
+        theme_Publication() +
+        labs(x = "Weeks", y = "Systolic BP (mmHg)", title = "Daytime systolic BP",
+             color = ""))
 
 (plotc <- ggplot() +
     geom_rect(aes(xmin = 0, xmax = 4, ymin = 90, ymax = 170), 
-                  fill = "#CDCDCD", alpha = 0.3) +
+              fill = "#CDCDCD", alpha = 0.3) +
+    geom_line(data = df_total, aes(x = weeks, y = Asleep_systolic_Mean,
+                                   color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+    geom_point(data = df_total, aes(x = weeks, y = Asleep_systolic_Mean,
+                                    color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
     geom_line(data = df_means, aes(x = weeks, y = Asleep_systolic_Mean_mean, 
-                                   color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
-    # geom_line(data = df_total, aes(x = weeks, y = Asleep_systolic_Mean,
-    #                                color = Treatment_group, group = ID), alpha = 0.2) +
+                                   color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+    geom_point(data = df_means, aes(x = weeks, y = Asleep_systolic_Mean_mean, 
+                                    color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
     geom_errorbar(data = df_means,
-                  aes(ymin = Asleep_systolic_Mean_mean - (Asleep_systolic_Mean_sd/sqrt(11)),
-                      ymax = Asleep_systolic_Mean_mean + (Asleep_systolic_Mean_sd/sqrt(11)),
+                  aes(ymin = Asleep_systolic_Mean_mean - (Asleep_systolic_Mean_sd/sqrt(Asleep_systolic_Mean_n)),
+                      ymax = Asleep_systolic_Mean_mean + (Asleep_systolic_Mean_sd/sqrt(Asleep_systolic_Mean_n)),
                       x = weeks,
-                      color = Treatment_group), width=0.1, linewidth = 0.75) +
-    stat_pvalue_manual(aslsys_lm, y.position = 150, label = "p_signif", 
-                       remove.bracket = TRUE, bracket.size = 0, size = 5) +
+                      color = Treatment_group), width=0.1, linewidth = 0.8) +
+    stat_pvalue_manual(aslsys_lm, y.position = 165, label = "p.signif", 
+                       tip.length = 0, bracket.shorten = 0.1, size = 5, hide.ns = TRUE) +
     scale_color_jama() + 
     scale_y_continuous(limits = c(90,170), breaks = seq(from = 90, to = 170, by = 10)) +
     theme_Publication() +
     labs(x = "Weeks", y = "Systolic BP (mmHg)", title = "Nighttime systolic BP", 
-         color = "Treatment"))
+         color = ""))
 
 
 (plotd <- ggplot() +
-        geom_rect(aes(xmin = 0, xmax = 4, ymin = 45, ymax = 105), 
-                  fill = "#CDCDCD", alpha = 0.3) +
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 45, ymax = 105), fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_total, aes(x = weeks, y = Total_diastolic_Mean,
+                                     color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+        geom_point(data = df_total, aes(x = weeks, y = Total_diastolic_Mean,
+                                    color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
         geom_line(data = df_means, aes(x = weeks, y = Total_diastolic_Mean_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
-        # geom_line(data = df_total, aes(x = weeks, y = Total_diastolic_Mean,
-        #                                color = Treatment_group, group = ID), alpha = 0.2) +
+                                     color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+        geom_point(data = df_means, aes(x = weeks, y = Total_diastolic_Mean_mean,
+                                        color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
         geom_errorbar(data = df_means,
-                      aes(ymin = Total_diastolic_Mean_mean - (Total_diastolic_Mean_sd/sqrt(11)),
-                          ymax = Total_diastolic_Mean_mean + (Total_diastolic_Mean_sd/sqrt(11)),
+                      aes(ymin = Total_diastolic_Mean_mean - (Total_diastolic_Mean_sd/sqrt(Total_diastolic_Mean_n)),
+                          ymax = Total_diastolic_Mean_mean + (Total_diastolic_Mean_sd/sqrt(Total_diastolic_Mean_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1, linewidth = 0.75) +
-        stat_pvalue_manual(totdia_lm, y.position = 100, label = "p_signif", 
-                           remove.bracket = TRUE, bracket.size = 0, size = 5) +
+                          color = Treatment_group), width=0.1, linewidth = 0.8) +
+        stat_pvalue_manual(totdia_lm, y.position = 103, label = "p.signif", 
+                           tip.length = 0, bracket.shorten = 0.1, size = 5, hide.ns = TRUE) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(45,105), breaks = seq(from = 45, to = 105, by = 5)) +
         theme_Publication() +
         labs(x = "Weeks", y = "Diastolic BP (mmHg)", title = "Average diastolic BP", 
-             color = "Treatment"))
+             color = ""))
 
 (plote <- ggplot() +
-        geom_rect(aes(xmin = 0, xmax = 4, ymin = 45, ymax = 105), 
-                  fill = "#CDCDCD", alpha = 0.3) +
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 45, ymax = 105), fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_total, aes(x = weeks, y = Awake_diastolic_Mean,
+                                    color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+        geom_point(data = df_total, aes(x = weeks, y = Awake_diastolic_Mean,
+                                    color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
         geom_line(data = df_means, aes(x = weeks, y = Awake_diastolic_Mean_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1,
-                  linewidth = 0.75) +
-        # geom_line(data = df_total, aes(x = weeks, y = Awake_diastolic_Mean,
-        #                                color = Treatment_group, group = ID), alpha = 0.2) +
+                                     color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+        geom_point(data = df_means, aes(x = weeks, y = Awake_diastolic_Mean_mean, 
+                                        color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
         geom_errorbar(data = df_means,
-                      aes(ymin = Awake_diastolic_Mean_mean - (Awake_diastolic_Mean_sd/sqrt(11)),
-                          ymax = Awake_diastolic_Mean_mean + (Awake_diastolic_Mean_sd/sqrt(11)),
+                      aes(ymin = Awake_diastolic_Mean_mean - (Awake_diastolic_Mean_sd/sqrt(Awake_diastolic_Mean_n)),
+                          ymax = Awake_diastolic_Mean_mean + (Awake_diastolic_Mean_sd/sqrt(Awake_diastolic_Mean_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1, linewidth = 0.75) +
-        stat_pvalue_manual(awdia_lm, y.position = 100, label = "p_signif", 
-                           remove.bracket = TRUE, bracket.size = 0, size = 5) +
+                          color = Treatment_group), width=0.1, linewidth = 0.8) +
+        stat_pvalue_manual(awdia_lm, y.position = 103, label = "p.signif", 
+                           tip.length = 0, bracket.shorten = 0.1, size = 5, hide.ns = TRUE) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(45,105), breaks = seq(from = 45, to = 105, by = 5)) +
         theme_Publication() +
@@ -313,19 +333,22 @@ totdia_lm <- df_total %>% linearmixed(Total_diastolic_Mean)
 # save_function_bp(plote, group = "abpm", name = "dbp_daytime_abpm", width = 5, height = 4)
 
 (plotf <- ggplot() +
-        geom_rect(aes(xmin = 0, xmax = 4, ymin = 45, ymax = 105), 
-                  fill = "#CDCDCD", alpha = 0.4) +
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 45, ymax = 105), fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_total, aes(x = weeks, y = Asleep_diastolic_Mean,
+                                       color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+        geom_point(data = df_total, aes(x = weeks, y = Asleep_diastolic_Mean,
+                                        color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
         geom_line(data = df_means, aes(x = weeks, y = Asleep_diastolic_Mean_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
-        # geom_line(data = df_total, aes(x = weeks, y = Asleep_diastolic_Mean,
-        #                                color = Treatment_group, group = ID), alpha = 0.2) +
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+        geom_point(data = df_means, aes(x = weeks, y = Asleep_diastolic_Mean_mean, 
+                                        color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
         geom_errorbar(data = df_means,
-                      aes(ymin = Asleep_diastolic_Mean_mean - (Asleep_diastolic_Mean_sd/sqrt(11)),
-                          ymax = Asleep_diastolic_Mean_mean + (Asleep_diastolic_Mean_sd/sqrt(11)),
+                      aes(ymin = Asleep_diastolic_Mean_mean - (Asleep_diastolic_Mean_sd/sqrt(Asleep_diastolic_Mean_n)),
+                          ymax = Asleep_diastolic_Mean_mean + (Asleep_diastolic_Mean_sd/sqrt(Asleep_diastolic_Mean_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1, linewidth = 0.75) +
-        stat_pvalue_manual(asldia_lm, y.position = 100, label = "p_signif", 
-                           hide.ns = TRUE, remove.bracket = TRUE, size = 5) +
+                          color = Treatment_group), width=0.1, linewidth = 0.8) +
+        stat_pvalue_manual(asldia_lm, y.position = 103, label = "p.signif", 
+                           tip.length = 0, bracket.shorten = 0.1, size = 5, hide.ns = TRUE) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(45,105), breaks = seq(from = 45, to = 105, by = 5)) +
         theme_Publication() +
@@ -334,39 +357,45 @@ totdia_lm <- df_total %>% linearmixed(Total_diastolic_Mean)
 
 
 (plotg <- ggplot() +
-        geom_rect(aes(xmin = 0, xmax = 4, ymin = 45, ymax = 85), 
-                  fill = "#CDCDCD", alpha = 0.3) +
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 45, ymax = 85), fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_total, aes(x = weeks, y = Total_HR_Mean,
+                                       color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+        geom_point(data = df_total, aes(x = weeks, y = Total_HR_Mean,
+                                        color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
         geom_line(data = df_means, aes(x = weeks, y = Total_HR_Mean_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
-        # geom_line(data = df_total, aes(x = weeks, y = Total_HR_Mean,
-        #                                color = Treatment_group, group = ID), alpha = 0.2) +
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+        geom_point(data = df_means, aes(x = weeks, y = Total_HR_Mean_mean, 
+                                        color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
         geom_errorbar(data = df_means,
-                      aes(ymin = Total_HR_Mean_mean - (Total_HR_Mean_sd/sqrt(11)),
-                          ymax = Total_HR_Mean_mean + (Total_HR_Mean_sd/sqrt(11)),
+                      aes(ymin = Total_HR_Mean_mean - (Total_HR_Mean_sd/sqrt(Total_HR_Mean_n)),
+                          ymax = Total_HR_Mean_mean + (Total_HR_Mean_sd/sqrt(Total_HR_Mean_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1, linewidth = 0.75) +
-        stat_pvalue_manual(totp_lm, y.position = 82, label = "p_signif", 
-                           remove.bracket = TRUE, bracket.size = 0, size = 5) +
+                          color = Treatment_group), width=0.1, linewidth = 0.8) +
+        stat_pvalue_manual(totp_lm, y.position = 82, label = "p.signif", 
+                           tip.length = 0, bracket.shorten = 0.1, size = 5, hide.ns = TRUE) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(45,85), breaks = seq(from = 45, to = 85, by = 5)) +
         theme_Publication() +
-        labs(x = "Weeks", y = "Heart rate (/min)", title = "Total heart rate", 
+        labs(x = "Weeks", y = "Heart rate (/min)", title = "Average heart rate", 
              color = "Treatment"))
 
 (ploth <- ggplot() +
-        geom_rect(aes(xmin = 0, xmax = 4, ymin = 45, ymax = 85), 
-                  fill = "#CDCDCD", alpha = 0.3) +
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 45, ymax = 85), fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_total, aes(x = weeks, y = Awake_HR_Mean,
+                                       color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+        geom_point(data = df_total, aes(x = weeks, y = Awake_HR_Mean,
+                                        color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
         geom_line(data = df_means, aes(x = weeks, y = Awake_HR_Mean_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
-        # geom_line(data = df_total, aes(x = weeks, y = Awake_HR_Mean,
-        #                                color = Treatment_group, group = ID), alpha = 0.2) +
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+        geom_point(data = df_means, aes(x = weeks, y = Awake_HR_Mean_mean, 
+                                        color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
         geom_errorbar(data = df_means,
-                      aes(ymin = Awake_HR_Mean_mean - (Awake_HR_Mean_sd/sqrt(11)),
-                          ymax = Awake_HR_Mean_mean + (Awake_HR_Mean_sd/sqrt(11)),
+                      aes(ymin = Awake_HR_Mean_mean - (Awake_HR_Mean_sd/sqrt(Awake_HR_Mean_n)),
+                          ymax = Awake_HR_Mean_mean + (Awake_HR_Mean_sd/sqrt(Awake_HR_Mean_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1, linewidth = 0.75) +
-        stat_pvalue_manual(awp_lm, y.position = 82, label = "p_signif", 
-                           remove.bracket = TRUE, size = 5) +
+                          color = Treatment_group), width=0.1, linewidth = 0.8) +
+        stat_pvalue_manual(awp_lm, y.position = 82, label = "p.signif", 
+                           tip.length = 0, bracket.shorten = 0.1, size = 5, hide.ns = TRUE) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(45,85), breaks = seq(from = 45, to = 85, by = 5)) +
         theme_Publication() +
@@ -374,19 +403,22 @@ totdia_lm <- df_total %>% linearmixed(Total_diastolic_Mean)
              color = "Treatment"))
 
 (ploti <- ggplot() +
-        geom_rect(aes(xmin = 0, xmax = 4, ymin = 45, ymax = 85), 
-                  fill = "#CDCDCD", alpha = 0.4) +
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 45, ymax = 85), fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_total, aes(x = weeks, y = Asleep_HR_Mean,
+                                       color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+        geom_point(data = df_total, aes(x = weeks, y = Asleep_HR_Mean,
+                                        color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
         geom_line(data = df_means, aes(x = weeks, y = Asleep_HR_Mean_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
-        # geom_line(data = df_total, aes(x = weeks, y = Asleep_HR_Mean,
-        #                                color = Treatment_group, group = ID), alpha = 0.2) +
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+        geom_point(data = df_means, aes(x = weeks, y = Asleep_HR_Mean_mean, 
+                                        color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
         geom_errorbar(data = df_means,
-                      aes(ymin = Asleep_HR_Mean_mean - (Asleep_HR_Mean_sd/sqrt(11)),
-                          ymax = Asleep_HR_Mean_mean + (Asleep_HR_Mean_sd/sqrt(11)),
+                      aes(ymin = Asleep_HR_Mean_mean - (Asleep_HR_Mean_sd/sqrt(Asleep_HR_Mean_n)),
+                          ymax = Asleep_HR_Mean_mean + (Asleep_HR_Mean_sd/sqrt(Asleep_HR_Mean_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1, linewidth = 0.75) +
-        stat_pvalue_manual(aslp_lm, y.position = 82, label = "p_signif", 
-                           hide.ns = TRUE, remove.bracket = TRUE, size = 5) +
+                          color = Treatment_group), width=0.1, linewidth = 0.8) +
+        stat_pvalue_manual(aslp_lm, y.position = 82, label = "p.signif", 
+                           tip.length = 0, bracket.shorten = 0.1, size = 5, hide.ns = TRUE) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(45,85), breaks = seq(from = 45, to = 85, by = 5)) +
         theme_Publication() +
@@ -397,9 +429,9 @@ totdia_lm <- df_total %>% linearmixed(Total_diastolic_Mean)
 (plot_total <- ggarrange(plota, plotb, plotc, plotd, plote, plotf, 
                          plotg, ploth, ploti,
                          nrow = 3, ncol = 3, 
-                         labels = c("A", "B", "C", "D", "E", "F", "G", "H", "I"),
+                         labels = c("A", "", "", "B", "", "", "C", "", ""),
                          common.legend = TRUE, legend = "bottom"))
-save_function_bp(plot_total, group = "abpm", name = "abpm_lineplots_lmm", width = 9, height = 8)
+save_function_bp(plot_total, group = "abpm", name = "abpm_lineplots", width = 12, height = 12)
 
 plot_pulse <- ggarrange(plotg, ploth, ploti, labels = c("A", "B", "C"), 
                         common.legend = TRUE,
@@ -423,103 +455,6 @@ save_function_bp(plotg, group = "abpm", name = "total_pulse_lmm")
 save_function_bp(ploth, group = "abpm", name = "day_pulse_lmm")
 save_function_bp(ploti, group = "abpm", name = "night_pulse_lmm")
 
-#### Home BP ####
-str(homebp)
-df_homebp <- full_join(homebp, df, by= c("ID")) %>% 
-    filter(!ID %in% c("BEAM_299", "BEAM_664", "BEAM_713")) %>% 
-    mutate(Treatment_group = as.factor(Treatment_group)) %>% 
-    mutate(week = as.numeric(week),
-        week = case_when(
-            week < 0 ~ paste0(week + 1),
-            week > 0 ~ paste0(week),
-    ), week = as.numeric(week)) %>% 
-    filter(week %in% c(1:5)) %>%
-    droplevels(.) 
-
-df_homebp_filter <- df_homebp %>% select(ID, contains("sbp")) %>% 
-    group_by(ID) %>% 
-    summarise(., nas = sum(is.na(mean_sbp))) %>%
-    filter(., nas > 0)
-
-df_homebp <- df_homebp %>% filter(!ID %in% df_homebp_filter$ID)
-
-df_mean_homebp <- df_homebp %>% 
-    select(ID, mean_sbp, mean_dbp, mean_pulse, week, Treatment_group) %>% 
-    group_by(Treatment_group, week) %>% 
-    summarise(across(c("mean_sbp", "mean_dbp", "mean_pulse"), list(mean = mean, sd = sd), na.rm = TRUE,
-                     .names = "{.col}_{.fn}"))
-
-lm_home_sbp <- linearmixed_homebp(df_homebp, mean_sbp)
-lm_home_dbp <- linearmixed_homebp(df_homebp, mean_dbp)
-lm_home_pulse <- linearmixed_homebp(df_homebp, mean_pulse)
-
-(plot_homebp_1 <- ggplot() +
-        geom_rect(aes(xmin = 0, xmax = 4, ymin = 115, ymax = 180), 
-                  fill = "#CDCDCD", alpha = 0.4) +
-        geom_line(data = df_mean_homebp, aes(x = week, y = mean_sbp_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
-        geom_line(data = df_homebp, aes(x = week, y = mean_sbp,
-                                       color = Treatment_group, group = ID), alpha = 0.2) +
-        geom_errorbar(data = df_mean_homebp,
-                      aes(ymin = mean_sbp_mean - (mean_sbp_sd/sqrt(11)),
-                          ymax = mean_sbp_mean + (mean_sbp_sd/sqrt(11)),
-                          x = week,
-                          color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(lm_home_sbp, y.position = 160, label = "p_signif", 
-                           hide.ns = TRUE, remove.bracket = TRUE) +
-        scale_color_jama(guide = "none") + 
-        scale_y_continuous(limits = c(115,180), breaks = seq(from = 115, to = 180, by = 10)) +
-        theme_Publication() +
-        labs(x = "Weeks", y = "Systolic BP (mmHg)", title = "Home systolic BP"))
-
-(plot_homebp_2 <- ggplot() +
-        geom_rect(aes(xmin = 0, xmax = 4, ymin = 70, ymax = 107), 
-                  fill = "#CDCDCD", alpha = 0.4) +
-        geom_line(data = df_mean_homebp, aes(x = week, y = mean_dbp_mean, 
-                            color = Treatment_group, group = Treatment_group), 
-                            alpha = 1) +
-        geom_line(data = df_homebp, aes(x = week, y = mean_dbp,
-                                        color = Treatment_group, group = ID), alpha = 0.2) +
-        geom_errorbar(data = df_mean_homebp,
-                      aes(ymin = mean_dbp_mean - (mean_dbp_sd/sqrt(11)),
-                          ymax = mean_dbp_mean + (mean_dbp_sd/sqrt(11)),
-                          x = week,
-                          color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(lm_home_dbp, y.position = 100, label = "p_signif", 
-                           remove.bracket = TRUE, hide.ns = TRUE) +
-        scale_color_jama(guide = "none") + 
-        scale_y_continuous(limits = c(70, 107), breaks = seq(from = 70, to = 105, by = 5)) +
-        theme_Publication() +
-        labs(x = "Weeks", y = "Diastolic BP (mmHg)", title = "Home diastolic BP"))
-
-(plot_homebp_3 <- ggplot() +
-        geom_rect(aes(xmin = 0, xmax = 4, ymin = 45, ymax = 90), 
-                  fill = "#CDCDCD", alpha = 0.4) +
-        geom_line(data = df_mean_homebp, aes(x = week, y = mean_pulse_mean, 
-                                             color = Treatment_group, group = Treatment_group), 
-                  alpha = 1) +
-        geom_line(data = df_homebp, aes(x = week, y = mean_pulse,
-                                        color = Treatment_group, group = ID), alpha = 0.2) +
-        geom_errorbar(data = df_mean_homebp,
-                      aes(ymin = mean_pulse_mean - (mean_pulse_sd/sqrt(11)),
-                          ymax = mean_pulse_mean + (mean_pulse_sd/sqrt(11)),
-                          x = week,
-                          color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(lm_home_dbp, y.position = 85, label = "p_signif", 
-                           remove.bracket = TRUE, hide.ns = TRUE) +
-        scale_color_jama(guide = "none") + 
-        scale_y_continuous(limits = c(45, 90), breaks = seq(from = 45, to = 90, by = 5)) +
-        theme_Publication() +
-        labs(x = "Weeks", y = "Pulse / min", title = "Home pulse"))
-
-ggarrange(plot_homebp_1, plot_homebp_2, plot_homebp_3, nrow = 1, ncol = 3)
-ggsave(filename = "results/homebp/homebp_lineplots_with_lmm.svg", width = 12, height = 4)
-ggsave(filename = "results/homebp/homebp_lineplots_with_lmm.pdf", width = 12, height = 4)
-
-save_function_bp(plot_homebp_1, "homebp", "home_sbp")
-save_function_bp(plot_homebp_1, "homebp", "home_dbp")
-save_function_bp(plot_homebp_1, "homebp", "home_pulse")
-
 #### Office BP ####
 df_office <- officebp %>% left_join(., df, by = "ID") %>% 
     #right_join(right_join(covariates, df, by = "ID"), officebp, by= c("ID", "visit")) %>% 
@@ -538,26 +473,31 @@ df_office <- officebp %>% left_join(., df, by = "ID") %>%
 df_officemean <- df_office %>% 
     select(ID, Systolic, Diastolic, Pulse, weeks, Treatment_group) %>% 
     group_by(Treatment_group, weeks) %>% 
-    summarise(across(c("Systolic", "Diastolic", "Pulse"), list(mean = mean, sd = sd), .names = "{.col}_{.fn}"))
+    summarise(across(c("Systolic", "Diastolic", "Pulse"), list(mean = mean, sd = sd, n = length), 
+                     .names = "{.col}_{.fn}"))
 
 officesys_lm <- df_office %>% linearmixed_office(Systolic)
 
 (plot_officesbp <- ggplot() +
-        geom_rect(aes(xmin = 0, xmax = 4, ymin = 105, ymax = 180), 
+        geom_rect(aes(xmin = 0, xmax = 4, ymin = 105, ymax = 185), 
                   fill = "#CDCDCD", alpha = 0.4) +
+        geom_line(data = df_office, aes(x = weeks, y = Systolic,
+                                       color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+        geom_point(data = df_office, aes(x = weeks, y = Systolic,
+                                        color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
         geom_line(data = df_officemean, aes(x = weeks, y = Systolic_mean, 
-                                             color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
-        # geom_line(data = df_office, aes(x = weeks, y = Systolic,
-        #                                 color = Treatment_group, group = ID), alpha = 0.2) +
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+        geom_point(data = df_officemean, aes(x = weeks, y = Systolic_mean, 
+                                        color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
         geom_errorbar(data = df_officemean,
-                      aes(ymin = Systolic_mean - (Systolic_sd/sqrt(11)),
-                          ymax = Systolic_mean + (Systolic_sd/sqrt(11)),
+                      aes(ymin = Systolic_mean - (Systolic_sd/sqrt(Systolic_n)),
+                          ymax = Systolic_mean + (Systolic_sd/sqrt(Systolic_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1, linewidth = 0.75) +
-        stat_pvalue_manual(officesys_lm, y.position = 160, label = "p_signif", 
-                           hide.ns = TRUE, remove.bracket = TRUE, size = 5) +
+                          color = Treatment_group), width=0.1, linewidth = 0.8) +
+        stat_pvalue_manual(officesys_lm, y.position = 160, label = "p.signif", 
+                           tip.length = 0, bracket.shorten = 0.1, size = 5, hide.ns = TRUE) +
         scale_color_jama() + 
-        scale_y_continuous(limits = c(105,180), breaks = seq(from = 105, to = 180, by = 10)) +
+        scale_y_continuous(limits = c(105,185), breaks = seq(from = 105, to = 185, by = 10)) +
         theme_Publication() +
         labs(x = "Weeks", y = "Systolic BP (mmHg)", title = "Office systolic BP", color = ""))
 
@@ -566,17 +506,21 @@ officedia_lm <- df_office %>% linearmixed_office(Diastolic)
 (plot_officedbp <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 70, ymax = 115), 
                   fill = "#CDCDCD", alpha = 0.4) +
+        geom_line(data = df_office, aes(x = weeks, y = Diastolic,
+                                        color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+        geom_point(data = df_office, aes(x = weeks, y = Diastolic,
+                                         color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
         geom_line(data = df_officemean, aes(x = weeks, y = Diastolic_mean, 
-                                            color = Treatment_group, group = Treatment_group), alpha = 1) +
-        # geom_line(data = df_office, aes(x = weeks, y = Diastolic,
-        #                                 color = Treatment_group, group = ID), alpha = 0.2) +
+                                            color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+        geom_point(data = df_officemean, aes(x = weeks, y = Diastolic_mean, 
+                                             color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
         geom_errorbar(data = df_officemean,
-                      aes(ymin = Diastolic_mean - (Diastolic_sd/sqrt(11)),
-                          ymax = Diastolic_mean + (Diastolic_sd/sqrt(11)),
+                      aes(ymin = Diastolic_mean - (Diastolic_sd/sqrt(Diastolic_n)),
+                          ymax = Diastolic_mean + (Diastolic_sd/sqrt(Diastolic_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1, linewidth = 0.75) +
-        stat_pvalue_manual(officedia_lm, y.position = 105, label = "p_signif",
-                           hide.ns = TRUE, remove.bracket = TRUE, size = 5) +
+                          color = Treatment_group), width=0.1, linewidth = 0.8) +
+        stat_pvalue_manual(officedia_lm, y.position = 110, label = "p.signif",
+                           tip.length = 0, bracket.shorten = 0.1, size = 5, hide.ns = TRUE) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(70,115), breaks = seq(from = 70, to = 115, by = 5)) +
         theme_Publication() +
@@ -587,17 +531,21 @@ officepulse_lm <- df_office %>% linearmixed_office(Pulse)
 (plot_officepulse <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 45, ymax = 90), 
                   fill = "#CDCDCD", alpha = 0.4) +
-        geom_line(data = df_officemean, aes(x = weeks, y = Pulse_mean, 
-                                            color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
         geom_line(data = df_office, aes(x = weeks, y = Pulse,
-                                        color = Treatment_group, group = ID), alpha = 0.2) +
+                                        color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+        geom_point(data = df_office, aes(x = weeks, y = Pulse,
+                                         color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
+        geom_line(data = df_officemean, aes(x = weeks, y = Pulse_mean, 
+                                            color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+        geom_point(data = df_officemean, aes(x = weeks, y = Pulse_mean, 
+                                             color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
         geom_errorbar(data = df_officemean,
-                      aes(ymin = Pulse_mean - (Pulse_sd/sqrt(11)),
-                          ymax = Pulse_mean + (Pulse_sd/sqrt(11)),
+                      aes(ymin = Pulse_mean - (Pulse_sd/sqrt(Pulse_n)),
+                          ymax = Pulse_mean + (Pulse_sd/sqrt(Pulse_n)),
                           x = weeks,
-                          color = Treatment_group), width=0.1, linewidth = 0.75) +
-        stat_pvalue_manual(officepulse_lm, y.position = 85, label = "p_signif", 
-                           hide.ns = TRUE, remove.bracket = TRUE, size = 5) +
+                          color = Treatment_group), width=0.1, linewidth = 0.8) +
+        stat_pvalue_manual(officepulse_lm, y.position = 85, label = "p.signif", 
+                           tip.length = 0, bracket.shorten = 0.1, size = 5, hide.ns = TRUE) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(45,90), breaks = seq(from = 45, to = 90, by = 5)) +
         theme_Publication() +
@@ -610,39 +558,3 @@ ggarrange(plot_officesbp, plot_officedbp, plot_officepulse, nrow = 1, ncol = 3,
 ggsave(filename = "results/officebp/officebp_lineplots_with_lmm.svg", width = 12, height = 4)
 ggsave(filename = "results/officebp/officebp_lineplots_with_lmm.pdf", width = 12, height = 4)
 ggsave(filename = "results/officebp/officebp_lineplots_with_lmm.png", width = 12, height = 4)
-
-officebp_boxplots <- df_office %>% 
-    mutate(before_after = case_when(
-        visit == "V2" ~ paste0("Before"),
-        visit == "V4" ~ paste0("Treatment"),
-        visit == "V5" ~ paste0("After")
-    ),
-    before_after = fct_relevel(before_after, "Before", after = 0L),
-    before_after = fct_relevel(before_after, "After", after = 2L))
-
-(boxplot_officesbp <- ggplot(officebp_boxplots, aes(x = before_after, y = Systolic)) +
-        geom_boxplot(aes(fill = Treatment_group), outlier.shape = NA) +
-        geom_point(size = 0.75)+
-        geom_line(aes(color = Treatment_group, group = ID), alpha = 0.2) +
-        stat_compare_means(method = "t.test", label = "p.value",
-                           comparisons = list(c("Before", "Treatment"), c("Treatment", "After"))) +
-        facet_wrap(~Treatment_group) + 
-        scale_fill_jama(guide = "none") +
-        scale_color_jama(guide = "none") +
-        labs(x = "", title = "Office systolic BP", y = "Systolic BP (mmHg)") +
-        theme_Publication() )
-save_function_bp(boxplot_officesbp, "officebp", "boxplot_officesbp", height = 5)
-
-(boxplot_officedbp <- ggplot(officebp_boxplots, aes(x = before_after, y = Diastolic)) +
-        geom_boxplot(aes(fill = Treatment_group), outlier.shape = NA) +
-        geom_point(size = 0.75)+
-        geom_line(aes(color = Treatment_group, group = ID), alpha = 0.2) +
-        stat_compare_means(method = "t.test", label = "p.value",
-                           comparisons = list(c("Before", "Treatment"), c("Treatment", "After"))) +
-        facet_wrap(~Treatment_group) + 
-        scale_fill_jama(guide = "none") +
-        scale_color_jama(guide = "none") +
-        labs(x = "", title = "Office diastolic BP", y = "Diastolic BP (mmHg)") +
-        theme_Publication() )
-save_function_bp(boxplot_officesbp, "officebp", "boxplot_officedbp", height = 5)
-
