@@ -67,13 +67,14 @@ linearmixed_stn <- function(data, var){
     
     statres <- rbind(statres_line1, statres_line2)
     statres <- tibble::as_tibble(statres)
-    statres$p_signif <- case_when(
+    statres$p.signif <- case_when(
         statres$pval < 0.05 ~paste0("*"),
         statres$pval < 0.01 ~paste0("**"),
         statres$pval < 0.001 ~paste0("***"),
         statres$pval > 0.05 ~ paste0("")
     )
-    statres$p_signif <- na_if(statres$p_signif, "")
+    statres$p_signif <- na_if(statres$p.signif, "")
+    statres <- statres %>% filter(p.signif != "")
     return(statres)
 }
 
@@ -122,17 +123,21 @@ serotonin_lm <- df_serotonin %>% linearmixed_stn(serotonin_uM) %>% filter(p_sign
 (plot_serotonin <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 16),
                   fill = "#CDCDCD", alpha = 0.3) +
-        geom_line(data = df_means, aes(x = weeks, y = serotonin_uM_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
         geom_line(data = df_serotonin, aes(x = weeks, y = serotonin_uM,
-                                      color = Treatment_group, group = ID), alpha = 0.2) +
+                                      color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+        geom_point(data = df_serotonin, aes(x = weeks, y = serotonin_uM,
+                                       color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
+        geom_line(data = df_means, aes(x = weeks, y = serotonin_uM_mean, 
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+        geom_point(data = df_means, aes(x = weeks, y = serotonin_uM_mean, 
+                                        color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
         geom_errorbar(data = df_means,
                       aes(ymin = serotonin_uM_mean - (serotonin_uM_sd/sqrt(serotonin_uM_n)),
                           ymax = serotonin_uM_mean + (serotonin_uM_sd/sqrt(serotonin_uM_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(serotonin_lm, y.position = 15, label = "p_signif",
-                           remove.bracket = TRUE, bracket.size = 0) +
+        stat_pvalue_manual(serotonin_lm, y.position = 15, label = "p.signif",
+                           tip.length = 0, bracket.shorten = 0.1, size = 5, hide.ns = TRUE) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(0,16), breaks = seq(from = 0, to = 16, by = 1)) +
         theme_Publication() +
@@ -145,16 +150,21 @@ logstn_lm <- df_serotonin %>% linearmixed_stn(log_stn)
 (plot_log_serotonin <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = -1, ymax = 1.5),
                   fill = "#CDCDCD", alpha = 0.3) +
-        geom_line(data = df_means, aes(x = weeks, y = log_stn_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
         geom_line(data = df_serotonin, aes(x = weeks, y = log_stn,
-                                           color = Treatment_group, group = ID), alpha = 0.2) +
+                                           color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+        geom_point(data = df_serotonin, aes(x = weeks, y = log_stn,
+                                            color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
+        geom_line(data = df_means, aes(x = weeks, y = log_stn_mean, 
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+        geom_point(data = df_means, aes(x = weeks, y = log_stn_mean, 
+                                        color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
         geom_errorbar(data = df_means,
                       aes(ymin = log_stn_mean - (log_stn_sd/sqrt(log_stn_n)),
                           ymax = log_stn_mean + (log_stn_sd/sqrt(log_stn_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(logstn_lm, y.position = 0.75, label = "p_signif", remove.bracket = TRUE, size = 5) +
+        stat_pvalue_manual(logstn_lm, y.position = 0.75, label = "p_signif", 
+                           tip.length = 0, bracket.shorten = 0.1, size = 5, hide.ns = TRUE) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(-1,1.5), breaks = seq(from = -1, to = 1.5, by = 0.25)) +
         theme_Publication() +

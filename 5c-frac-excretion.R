@@ -67,12 +67,13 @@ linearmixed_excr <- function(data, var){
     
     statres <- rbind(statres_line1, statres_line2)
     statres <- tibble::as_tibble(statres)
-    statres$p_signif <- case_when(
+    statres$p.signif <- case_when(
         statres$pval < 0.05 ~paste0("*"),
         statres$pval < 0.01 ~paste0("**"),
         statres$pval < 0.001 ~paste0("***"),
         statres$pval > 0.05 ~paste0("")
     )
+    statres <- statres %>% filter(p.signif != "")
     return(statres)
 }
 
@@ -153,17 +154,21 @@ fena_lmm <- linearmixed_excr(urine_total, FENa)
 (plot_fena <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 1.5),
                   fill = "#CDCDCD", alpha = 0.3) +
-        geom_line(data = urine_means, aes(x = weeks, y = FENa_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
         geom_line(data = urine_total, aes(x = weeks, y = FENa,
-                                      color = Treatment_group, group = ID), alpha = 0.2) +
+                                      color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+        geom_point(data = urine_total, aes(x = weeks, y = FENa,
+                                       color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
+        geom_line(data = urine_means, aes(x = weeks, y = FENa_mean, 
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+        geom_point(data = urine_means, aes(x = weeks, y = FENa_mean, 
+                                        color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
         geom_errorbar(data = urine_means,
                       aes(ymin = FENa_mean - (FENa_sd/sqrt(11)),
                           ymax = FENa_mean + (FENa_sd/sqrt(11)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(fena_lmm, y.position = 5, label = "p_signif", 
-                           remove.bracket = TRUE, bracket.size = 0) +
+        stat_pvalue_manual(fena_lmm, y.position = 5, label = "p.signif", 
+                           tip.length = 0, bracket.shorten = 0.1, size = 5, hide.ns = TRUE) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(0,1.5), breaks = seq(from = 0, to = 1.5, by = 0.25)) +
         theme_Publication() +

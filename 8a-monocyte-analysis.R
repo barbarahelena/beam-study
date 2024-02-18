@@ -67,12 +67,13 @@ linearmixed_mono_elisa <- function(data, var){
     
     statres <- rbind(statres_line1, statres_line2)
     statres <- tibble::as_tibble(statres)
-    statres$p_signif <- case_when(
+    statres$p.signif <- case_when(
         statres$pval < 0.05 ~paste0("*"),
         statres$pval < 0.01 ~paste0("**"),
         statres$pval < 0.001 ~paste0("***"),
         statres$pval > 0.05 ~paste0("")
     )
+    statres <- statres %>% filter(p.signif != "")
     return(statres)
 }
 
@@ -100,12 +101,13 @@ linearmixed_mono <- function(data, var){
     
     statres <- rbind(statres_line1, statres_line2)
     statres <- tibble::as_tibble(statres)
-    statres$p_signif <- case_when(
+    statres$p.signif <- case_when(
         statres$pval < 0.05 ~paste0("*"),
         statres$pval < 0.01 ~paste0("**"),
         statres$pval < 0.001 ~paste0("***"),
         statres$pval > 0.05 ~paste0("")
     )
+    statres <- statres %>% filter(p.signif != "")
     return(statres)
 }
 
@@ -122,16 +124,20 @@ function_plotmono <- function(data, data_means,
     (ggplot() +
             geom_rect(aes(xmin = 0, xmax = 4, ymin = min_var, ymax = max_var),
                       fill = "#CDCDCD", alpha = 0.3) +
-            geom_line(data = data_means1, aes(x = weeks, y = var_mean, 
-                                              color = Treatment_group, group = Treatment_group), alpha = 1) +
             geom_line(data = data1, aes(x = weeks, y = var,
-                                        color = Treatment_group, group = ID), alpha = 0.2) +
+                                          color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+            geom_point(data = data1, aes(x = weeks, y = var,
+                                           color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
+            geom_line(data = data_means1, aes(x = weeks, y = var_mean, 
+                                           color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+            geom_point(data = data_means1, aes(x = weeks, y = var_mean, 
+                                            color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
             geom_errorbar(data = data_means1,
                           aes(ymin = var_mean - (var_sd/sqrt(var_n)),
                               ymax = var_mean + (var_sd/sqrt(var_n)),
                               x = weeks,
                               color = Treatment_group), width=0.1) +
-            stat_pvalue_manual(var_lm, y.position = positiony, label = "p_signif",
+            stat_pvalue_manual(var_lm, y.position = positiony, label = "p.signif",
                                remove.bracket = TRUE, bracket.size = 0) +
             scale_color_jama() + 
             scale_y_continuous(limits = c(min_var,max_var)) +
@@ -152,16 +158,20 @@ function_plotelisa <- function(data, data_means,
     (ggplot() +
             geom_rect(aes(xmin = 0, xmax = 4, ymin = min_var, ymax = max_var),
                       fill = "#CDCDCD", alpha = 0.3) +
-            geom_line(data = data_means1, aes(x = weeks, y = var_mean, 
-                                              color = Treatment_group, group = Treatment_group), alpha = 1) +
             geom_line(data = data1, aes(x = weeks, y = var,
-                                        color = Treatment_group, group = ID), alpha = 0.2) +
+                                        color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+            geom_point(data = data1, aes(x = weeks, y = var,
+                                         color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
+            geom_line(data = data_means1, aes(x = weeks, y = var_mean, 
+                                              color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+            geom_point(data = data_means1, aes(x = weeks, y = var_mean, 
+                                               color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
             geom_errorbar(data = data_means1,
                           aes(ymin = var_mean - (var_sd/sqrt(var_n)),
                               ymax = var_mean + (var_sd/sqrt(var_n)),
                               x = weeks,
                               color = Treatment_group), width=0.1) +
-            stat_pvalue_manual(var_lm, y.position = positiony, label = "p_signif",
+            stat_pvalue_manual(var_lm, y.position = positiony, label = "p.signif",
                                remove.bracket = TRUE, bracket.size = 0) +
             scale_color_jama() + 
             scale_y_continuous(limits = c(min_var,max_var)) +
@@ -187,8 +197,6 @@ mono <- rio::import("data/monocytes_n_tidy.xlsx") %>%
 tnfa <- rio::import("data/monocytes_tnfa_tidy.xlsx")
 il6 <- rio::import("data/monocytes_il6_tidy.xlsx")
 elisa <- dplyr::bind_rows(tnfa, il6)
-
-
 
 #### Datasets for ELISA analysis ####
 df_elisa <- right_join(df_cov, elisa, by = c("ID")) %>% 
@@ -280,25 +288,25 @@ lpst_lm_tnf <- df_lps_trained %>% linearmixed_mono_elisa(tnfa_fc_train)
                                           tnfa_substr_ctrl, tnfa_substr_ctrl_mean, tnfa_substr_ctrl_sd, 
                                           tnfa_substr_ctrl_n,
                                          "TNFa (palmitate 100uM)", "TNFa pg/ml/10.000",
-                                         palm_lm_tnf_mono, 800))
+                                         palm_lm_tnf, 800))
 
 (firststim_il6_palm <- function_plotelisa(df_palm, df_palm_mean,
                                           il6_substr_ctrl, il6_substr_ctrl_mean, il6_substr_ctrl_sd, 
                                           il6_substr_ctrl_n,
                                           "IL6 (palmitate 100uM)", "IL6 pg/ml/10.000",
-                                          palm_lm_il6_mono, 800))
+                                          palm_lm_il6, 800))
 
 (firststim_tnf_lps <- function_plotelisa(df_lps, df_lps_mean,
                                           tnfa_substr_ctrl, tnfa_substr_ctrl_mean, tnfa_substr_ctrl_sd, 
                                           tnfa_substr_ctrl_n,
                                          "TNFa (LPS 1ng/ml)", "TNFa pg/ml/10.000",
-                                         lps_lm_tnf_mono, 5000))
+                                         lps_lm_tnf, 5000))
 
 (firststim_il6_lps <- function_plotelisa(df_lps, df_lps_mean,
                                           il6_substr_ctrl, il6_substr_ctrl_mean, il6_substr_ctrl_sd, 
                                           il6_substr_ctrl_n,
                                           "IL6 (LPS 1ng/ml)", "IL6 pg/ml/10.000",
-                                          lps_lm_il6_mono, 8000))
+                                          lps_lm_il6, 8000))
 
 
 (trained_tnf_palm <- function_plotelisa(df_palm_trained, df_palm_trained_mean,
@@ -414,5 +422,5 @@ im_lm <- df_mono %>% linearmixed_mono(im)
 
 mono_plot <- ggarrange(classmono, immono, nonclassmono,
           common.legend = TRUE, labels = c("A", "B", "C"), legend = "bottom",
-          nrow = 1, ncol = 3)
-save_function_mono(mono_plot, "monocyte_proportions", a = 10, b = 4)
+          nrow = 2, ncol = 2)
+save_function_mono(mono_plot, "monocyte_proportions", a = 8, b = 8)

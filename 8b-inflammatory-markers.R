@@ -67,12 +67,13 @@ linearmixed_elisa <- function(data, var){
     
     statres <- rbind(statres_line1, statres_line2)
     statres <- tibble::as_tibble(statres)
-    statres$p_signif <- case_when(
+    statres$p.signif <- case_when(
         statres$pval < 0.05 ~paste0("*"),
         statres$pval < 0.01 ~paste0("**"),
         statres$pval < 0.001 ~paste0("***"),
         statres$pval > 0.05 ~paste0("")
     )
+    statres <- statres %>% filter(p.signif != "")
     return(statres)
 }
 
@@ -109,13 +110,13 @@ linearmixed_cal <- function(data, var){
     
     statres <- rbind(statres_line1, statres_line2)
     statres <- tibble::as_tibble(statres)
-    statres$p_signif <- case_when(
+    statres$p.signif <- case_when(
         statres$pval < 0.05 ~paste0("*"),
         statres$pval < 0.01 ~paste0("**"),
         statres$pval < 0.001 ~paste0("***"),
         statres$pval > 0.05 ~ paste0("")
     )
-    statres$p_signif <- na_if(statres$p_signif, "")
+    statres$p.signif <- na_if(statres$p.signif, "")
     return(statres)
 }
 
@@ -167,17 +168,21 @@ ifng_lm <- df_elisa %>% linearmixed_elisa(IFNg)
 (plot_il6 <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 20),
                   fill = "#CDCDCD", alpha = 0.3) +
-        geom_line(data = df_means, aes(x = weeks, y = IL6_mean,
-                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
-        geom_line(data = df_elisa_prop, aes(x = weeks, y = IL6,
-                                            color = Treatment_group, group = ID), alpha = 0.2) +
+        geom_line(data = df_elisa, aes(x = weeks, y = IL6,
+                                      color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+        geom_point(data = df_elisa, aes(x = weeks, y = IL6,
+                                       color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
+        geom_line(data = df_means, aes(x = weeks, y = IL6_mean, 
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+        geom_point(data = df_means, aes(x = weeks, y = IL6_mean, 
+                                        color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
         geom_errorbar(data = df_means,
                       aes(ymin = IL6_mean - (IL6_sd/sqrt(IL6_n)),
                           ymax = IL6_mean + (IL6_sd/sqrt(IL6_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(il6_lm, y.position = 1, label = "p_signif",
-                           remove.bracket = TRUE, bracket.size = 0) +
+        stat_pvalue_manual(il6_lm, y.position = 1, label = "p.signif",
+                           tip.length = 0, bracket.shorten = 0.1, size = 5, hide.ns = TRUE) +
         scale_color_jama() +
         # scale_y_continuous(limits = c(0,9), breaks = seq(from = 0, to = 9, by = 1)) +
         scale_y_log10(limits = c(1,20)) +
@@ -187,17 +192,21 @@ ifng_lm <- df_elisa %>% linearmixed_elisa(IFNg)
 (plot_ifng <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 1.7),
                   fill = "#CDCDCD", alpha = 0.3) +
-        geom_line(data = df_means, aes(x = weeks, y = IFNg_mean,
-                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
-        geom_line(data = df_elisa_prop, aes(x = weeks, y = IFNg,
-                                            color = Treatment_group, group = ID), alpha = 0.2) +
+        geom_line(data = df_elisa, aes(x = weeks, y = IFNg,
+                                       color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+        geom_point(data = df_elisa, aes(x = weeks, y = IFNg,
+                                        color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
+        geom_line(data = df_means, aes(x = weeks, y = IFNg_mean, 
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+        geom_point(data = df_means, aes(x = weeks, y = IFNg_mean, 
+                                        color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
         geom_errorbar(data = df_means,
                       aes(ymin = IFNg_mean - (IFNg_sd/sqrt(IFNg_n)),
                           ymax = IFNg_mean + (IFNg_sd/sqrt(IFNg_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(ifng_lm, y.position = 6, label = "p_signif",
-                           remove.bracket = TRUE, bracket.size = 0) +
+        stat_pvalue_manual(ifng_lm, y.position = 6, label = "p.signif",
+                           tip.length = 0, bracket.shorten = 0.1, size = 5, hide.ns = TRUE) +
         scale_color_jama() +
         # scale_y_continuous(limits = c(0,2), breaks = seq(from = 0, to = 2, by = 0.25)) +
         scale_y_log10(limits = c(0.01, 1.7)) +
@@ -241,17 +250,21 @@ log_cal <- df_calprotectin %>% linearmixed_cal(log_cal)
 (plot_calprotectin <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 200),
                   fill = "#CDCDCD", alpha = 0.3) +
-        geom_line(data = df_means, aes(x = weeks, y = calprotectin_ug_g_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1) +
         geom_line(data = df_calprotectin, aes(x = weeks, y = calprotectin_ug_g,
-                                              color = Treatment_group, group = ID), alpha = 0.2) +
+                                       color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+        geom_point(data = df_calprotectin, aes(x = weeks, y = calprotectin_ug_g,
+                                        color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
+        geom_line(data = df_means, aes(x = weeks, y = calprotectin_ug_g_mean, 
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+        geom_point(data = df_means, aes(x = weeks, y = calprotectin_ug_g_mean, 
+                                        color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
         geom_errorbar(data = df_means,
                       aes(ymin = calprotectin_ug_g_mean - (calprotectin_ug_g_sd/sqrt(calprotectin_ug_g_n)),
                           ymax = calprotectin_ug_g_mean + (calprotectin_ug_g_sd/sqrt(calprotectin_ug_g_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(log_cal, y.position = 100, label = "p_signif",
-                           remove.bracket = TRUE, size = 5) +
+        stat_pvalue_manual(log_cal, y.position = 100, label = "p.signif",
+                           tip.length = 0, bracket.shorten = 0.1, size = 5, hide.ns = TRUE) +
         scale_color_jama() + 
         # scale_y_continuous(limits = c(0,200), breaks = seq(from = 0, to = 200, by = 20)) +
         scale_y_log10(limits = c(4, 200)) +
@@ -264,7 +277,7 @@ save_function(plot_calprotectin, "fecal_calprotectin")
 #### Save plot all inflammatory markers ####
 pl_elisa <- ggarrange(plot_il6, plot_ifng, plot_calprotectin,
                       labels = c("A", "B", "C"),
-                      ncol = 3, nrow = 1, common.legend = TRUE, legend = "bottom")
+                      ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom")
 pl_elisa
-save_function_elisa(pl_elisa, "inflammatorymarkers", a = 10, b = 3.5)
+save_function_elisa(pl_elisa, "inflammatorymarkers", a = 6, b = 6)
 

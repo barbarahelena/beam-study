@@ -551,10 +551,10 @@ officepulse_lm <- df_office %>% linearmixed_office(Pulse)
         theme_Publication() +
         labs(x = "Weeks", y = "Pulse / min", title = "Office pulse", color = ""))
 
-ggarrange(plot_officesbp, plot_officedbp, plot_officepulse, nrow = 1, ncol = 3,
+ggarrange(plot_officesbp, plot_officedbp, plot_officepulse, nrow = 3, ncol = 1,
           labels = c("A", "B", "C"),
           common.legend = TRUE,
           legend = "bottom")
-ggsave(filename = "results/officebp/officebp_lineplots_with_lmm.svg", width = 12, height = 4)
-ggsave(filename = "results/officebp/officebp_lineplots_with_lmm.pdf", width = 12, height = 4)
-ggsave(filename = "results/officebp/officebp_lineplots_with_lmm.png", width = 12, height = 4)
+ggsave(filename = "results/officebp/officebp_lineplots_with_lmm.svg", width = 5, height = 12)
+ggsave(filename = "results/officebp/officebp_lineplots_with_lmm.pdf", width = 5, height = 12)
+ggsave(filename = "results/officebp/officebp_lineplots_with_lmm.png", width = 5, height = 12)

@@ -67,12 +67,13 @@ linearmixed_scfa_cov <- function(data, var){
     
     statres <- rbind(statres_line1, statres_line2)
     statres <- tibble::as_tibble(statres)
-    statres$p_signif <- case_when(
+    statres$p.signif <- case_when(
         statres$pval < 0.05 ~paste0("*"),
         statres$pval < 0.01 ~paste0("**"),
         statres$pval < 0.001 ~paste0("***"),
         statres$pval > 0.05 ~paste0("")
     )
+    statres <- statres %>% filter(p.signif != "")
     return(statres)
 }
 
@@ -154,17 +155,21 @@ dw_pa <- linearmixed_scfa_cov(df_scfa_compl, DW_PA_umolg)
 (plot_acetate <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 800),
                   fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_scfa, aes(x = weeks, y = DW_AA_umolg,
+                                      color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+        geom_point(data = df_scfa, aes(x = weeks, y = DW_AA_umolg,
+                                       color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
         geom_line(data = df_means, aes(x = weeks, y = DW_AA_umolg_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
-        geom_line(data = df_scfa_compl, aes(x = weeks, y = DW_AA_umolg,
-                                       color = Treatment_group, group = ID), alpha = 0.2) +
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+        geom_point(data = df_means, aes(x = weeks, y = DW_AA_umolg_mean, 
+                                        color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
         geom_errorbar(data = df_means,
                       aes(ymin = DW_AA_umolg_mean - (DW_AA_umolg_sd/sqrt(DW_AA_umolg_n)),
                           ymax = DW_AA_umolg_mean + (DW_AA_umolg_sd/sqrt(DW_AA_umolg_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1, linewidth = 0.75) +
-        stat_pvalue_manual(dw_aa, y.position = 300, label = "p_signif", 
-                           remove.bracket = TRUE, bracket.size = 0, size = 5) +
+        stat_pvalue_manual(dw_aa, y.position = 300, label = "p.signif", 
+                           tip.length = 0, bracket.shorten = 0.1, size = 5, hide.ns = TRUE) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(0,800), breaks = seq(from = 0, to = 800, by = 100)) +
         theme_Publication() +
@@ -173,17 +178,21 @@ dw_pa <- linearmixed_scfa_cov(df_scfa_compl, DW_PA_umolg)
 (plot_butyrate <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 220),
                   fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_scfa, aes(x = weeks, y = DW_BA_umolg,
+                                      color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+        geom_point(data = df_scfa, aes(x = weeks, y = DW_BA_umolg,
+                                       color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
         geom_line(data = df_means, aes(x = weeks, y = DW_BA_umolg_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
-        geom_line(data = df_scfa_compl, aes(x = weeks, y = DW_BA_umolg,
-                                      color = Treatment_group, group = ID), alpha = 0.2) +
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+        geom_point(data = df_means, aes(x = weeks, y = DW_BA_umolg_mean, 
+                                        color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
         geom_errorbar(data = df_means,
                       aes(ymin = DW_BA_umolg_mean - (DW_BA_umolg_sd/sqrt(DW_BA_umolg_n)),
                           ymax = DW_BA_umolg_mean + (DW_BA_umolg_sd/sqrt(DW_BA_umolg_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1, linewidth = 0.75) +
-        stat_pvalue_manual(dw_ba, y.position = 150, label = "p_signif", 
-                           remove.bracket = TRUE, bracket.size = 0, size = 5) +
+        stat_pvalue_manual(dw_ba, y.position = 150, label = "p.signif", 
+                           tip.length = 0, bracket.shorten = 0.1, size = 5, hide.ns = TRUE) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(0,220), breaks = seq(from = 0, to = 220, by = 20)) +
         theme_Publication() +
@@ -193,17 +202,21 @@ dw_pa <- linearmixed_scfa_cov(df_scfa_compl, DW_PA_umolg)
 (plot_propionate <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 400),
                   fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_scfa, aes(x = weeks, y = DW_PA_umolg,
+                                      color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+        geom_point(data = df_scfa, aes(x = weeks, y = DW_PA_umolg,
+                                       color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
         geom_line(data = df_means, aes(x = weeks, y = DW_PA_umolg_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
-        geom_line(data = df_scfa_compl, aes(x = weeks, y = DW_PA_umolg,
-                                      color = Treatment_group, group = ID), alpha = 0.2) +
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+        geom_point(data = df_means, aes(x = weeks, y = DW_PA_umolg_mean, 
+                                        color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
         geom_errorbar(data = df_means,
                       aes(ymin = DW_PA_umolg_mean - (DW_PA_umolg_sd/sqrt(DW_PA_umolg_n)),
                           ymax = DW_PA_umolg_mean + (DW_PA_umolg_sd/sqrt(DW_PA_umolg_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1, linewidth = 0.75) +
-        stat_pvalue_manual(dw_pa, y.position = 150, label = "p_signif", 
-                           remove.bracket = TRUE, bracket.size = 0, size = 5) +
+        stat_pvalue_manual(dw_pa, y.position = 150, label = "p.signif", 
+                           tip.length = 0, bracket.shorten = 0.1, size = 5, hide.ns = TRUE) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(0,400), breaks = seq(from = 0, to = 400, by = 50)) +
         theme_Publication() +
@@ -223,17 +236,21 @@ p_propionate_lm <- df_scfa_compl %>% linearmixed_scfa_cov(plasma_propionate)
 (plot_p_acetate <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 200),
                   fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_scfa, aes(x = weeks, y = plasma_acetate,
+                                      color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+        geom_point(data = df_scfa, aes(x = weeks, y = plasma_acetate,
+                                       color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
         geom_line(data = df_means, aes(x = weeks, y = plasma_acetate_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
-        geom_line(data = df_scfa_compl, aes(x = weeks, y = plasma_acetate,
-                                      color = Treatment_group, group = ID), alpha = 0.2) +
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+        geom_point(data = df_means, aes(x = weeks, y = plasma_acetate_mean, 
+                                        color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
         geom_errorbar(data = df_means,
                       aes(ymin = plasma_acetate_mean - (plasma_acetate_sd/sqrt(plasma_acetate_n)),
                           ymax = plasma_acetate_mean + (plasma_acetate_sd/sqrt(plasma_acetate_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1, linewidth = 0.75) +
-        stat_pvalue_manual(p_acetate_lm, y.position = 150, label = "p_signif", 
-                           remove.bracket = TRUE, bracket.size = 0, size = 5) +
+        stat_pvalue_manual(p_acetate_lm, y.position = 150, label = "p.signif", 
+                           tip.length = 0, bracket.shorten = 0.1, size = 5, hide.ns = TRUE) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(0,200), breaks = seq(from = 0, to = 200, by = 50)) +
         theme_Publication() +
@@ -242,17 +259,21 @@ p_propionate_lm <- df_scfa_compl %>% linearmixed_scfa_cov(plasma_propionate)
 (plot_p_butyrate <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 8),
                   fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_scfa, aes(x = weeks, y = plasma_butyrate,
+                                      color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+        geom_point(data = df_scfa, aes(x = weeks, y = plasma_butyrate,
+                                       color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
         geom_line(data = df_means, aes(x = weeks, y = plasma_butyrate_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
-        geom_line(data = df_scfa_compl, aes(x = weeks, y = plasma_butyrate,
-                                      color = Treatment_group, group = ID), alpha = 0.2) +
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+        geom_point(data = df_means, aes(x = weeks, y = plasma_butyrate_mean, 
+                                        color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
         geom_errorbar(data = df_means,
                       aes(ymin = plasma_butyrate_mean - (plasma_butyrate_sd/sqrt(plasma_butyrate_n)),
                           ymax = plasma_butyrate_mean + (plasma_butyrate_sd/sqrt(plasma_butyrate_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1, linewidth = 0.75) +
-        stat_pvalue_manual(p_butyrate_lm, y.position = 6, label = "p_signif", 
-                           remove.bracket = TRUE, bracket.size = 0, size = 5) +
+        stat_pvalue_manual(p_butyrate_lm, y.position = 6, label = "p.signif", 
+                           tip.length = 0, bracket.shorten = 0.1, size = 5, hide.ns = TRUE) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(0,8), breaks = seq(from = 0, to = 8, by = 1)) +
         theme_Publication() +
@@ -261,17 +282,21 @@ p_propionate_lm <- df_scfa_compl %>% linearmixed_scfa_cov(plasma_propionate)
 (plot_p_propionate <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 10),
                   fill = "#CDCDCD", alpha = 0.3) +
+        geom_line(data = df_scfa, aes(x = weeks, y = plasma_propionate,
+                                      color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+        geom_point(data = df_scfa, aes(x = weeks, y = plasma_propionate,
+                                       color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
         geom_line(data = df_means, aes(x = weeks, y = plasma_propionate_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.75) +
-        geom_line(data = df_scfa_compl, aes(x = weeks, y = plasma_propionate,
-                                      color = Treatment_group, group = ID), alpha = 0.2) +
+                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+        geom_point(data = df_means, aes(x = weeks, y = plasma_propionate_mean, 
+                                        color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
         geom_errorbar(data = df_means,
                       aes(ymin = plasma_propionate_mean - (plasma_propionate_sd/sqrt(plasma_propionate_n)),
                           ymax = plasma_propionate_mean + (plasma_propionate_sd/sqrt(plasma_propionate_n)),
                           x = weeks,
                           color = Treatment_group), width=0.1, linewidth = 0.75) +
-        stat_pvalue_manual(p_propionate_lm, y.position = 6, label = "p_signif", 
-                           remove.bracket = TRUE, bracket.size = 0, size = 5) +
+        stat_pvalue_manual(p_propionate_lm, y.position = 6, label = "p.signif", 
+                           tip.length = 0, bracket.shorten = 0.1, size = 5, hide.ns = TRUE) +
         scale_color_jama() + 
         scale_y_continuous(limits = c(0,10), breaks = seq(from = 0, to = 10, by = 1)) +
         theme_Publication() +
