@@ -1,7 +1,7 @@
 # BEAM trial analyses
 
 # Project aims
-In this randomized, placebo-controlled double-blind trial, we aimed to investigate the impact of oral butyrate treatment on BP in patients with grade I hypertension. The primary outcome was daytime systolic blood pressure as measured with an ambulatory blood pressure device.
+In this randomized, placebo-controlled double-blind trial, we aimed to investigate the impact of oral butyrate treatment on BP in patients with hypertension. The primary outcome was daytime systolic blood pressure as measured with an ambulatory blood pressure device.
 
 # Paper
 A paper with more details on the methodology can be found here: [insert link].
