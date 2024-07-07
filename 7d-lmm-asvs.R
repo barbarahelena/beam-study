@@ -135,32 +135,36 @@ statres <- statres %>% arrange(pval, group1) %>%
            group1 = as.numeric(group1),
            group2 = as.numeric(group2))
 head(statres, n = 20)
-maxsig <- statres %>% filter(pval <= 0.05) %>% nrow(.)
+maxsig <- statres %>% filter(pval <= 0.05) %>% filter(!duplicated(asvname))
 
 plist <- list()
-for(i in 1:maxsig){
-    taxname <- statres$tax[i]
-    pval <- statres$pval[i]
-    asvnumber <- statres$asvname[i]
-    df_tot$asv <- df_tot[,statres$asvname[i]]
+for(i in 1:nrow(maxsig)){
+    taxname <- maxsig$tax[i]
+    pval <- maxsig$pval[i]
+    asvnumber <- maxsig$asvname[i]
+    df_tot$asv <- df_tot[,maxsig$asvname[i]]
     df_means <- df_tot %>% group_by(Treatment_group, weeks) %>% 
         summarise(mean = mean(asv), sd = sd(asv), n = length(asv))
-    res_lmm <- statres %>% filter(tax == taxname) %>% dplyr::select(-asvname)
+    res_lmm <- statres %>% filter(tax == taxname) %>% dplyr::select(-asvname) %>% filter(sig != "")
     asvmax <- max(df_tot$asv*1.1)
     pl2 <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = asvmax),
                   fill = "#CDCDCD", alpha = 0.3) +
-        geom_line(data = df_means, aes(x = weeks, y = mean, 
-                    color = Treatment_group, group = Treatment_group), alpha = 1) +
         geom_line(data = df_tot, aes(x = weeks, y = asv,
-                    color = Treatment_group, group = ID), alpha = 0.2) +
+                                    color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+        geom_point(data = df_tot, aes(x = weeks, y = asv,
+                                     color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
+        geom_line(data = df_means, aes(x = weeks, y = mean, 
+                                          color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+        geom_point(data = df_means, aes(x = weeks, y = mean, 
+                                           color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
         geom_errorbar(data = df_means,
                       aes(ymin = mean - (sd/sqrt(n)),
                           ymax = mean + (sd/sqrt(n)),
                           x = weeks,
                           color = Treatment_group), width=0.1) +
-        stat_pvalue_manual(res_lmm, y.position = asvmax*0.67, label = "{sig}",
-                           remove.bracket = TRUE) +
+        stat_pvalue_manual(res_lmm, y.position = asvmax*0.8, label = "{sig}", 
+                           tip.length = 0, bracket.shorten = 0.1, size = 5, hide.ns = TRUE) +
         scale_color_jama() + 
         coord_cartesian(ylim = c(0,asvmax)) +
         theme_Publication() +
@@ -170,9 +174,9 @@ for(i in 1:maxsig){
 }
 
 (plots <- ggarrange(plotlist = plist, common.legend = TRUE, legend = "bottom",
-          labels = LETTERS[1:14],
-          nrow = 5, ncol = 3))
-ggsave(plots, filename = "results/16S/lmer/lmer_plots.pdf", width = 10, height = 16)
-ggsave(plots, filename = "results/16S/lmer/lmer_plots.png", width = 10, height = 16)
-ggsave(plots, filename = "results/16S/lmer/lmer_plots.svg", width = 10, height = 16)
+          labels = LETTERS[1:12],
+          nrow = 4, ncol = 3))
+ggsave(plots, filename = "results/16S/lmer/lmer_plots.pdf", width = 10, height = 13)
+ggsave(plots, filename = "results/16S/lmer/lmer_plots.png", width = 10, height = 14)
+ggsave(plots, filename = "results/16S/lmer/lmer_plots.svg", width = 10, height = 14)
 write.csv2(statres, "results/16S/lmer/lmm_results.csv")

@@ -357,8 +357,8 @@ total_plot <- ggarrange(firststim_il6_palm, firststim_tnf_palm,
                         trained_il6_lps, trained_tnf_lps,
                         nrow = 4, ncol = 2,
                         common.legend = TRUE, legend = "bottom",
-                        labels = c("A", "B", "C", "D",
-                                   "E", "F", "G", "H"))
+                        labels = c("A", "", "B", "",
+                                   "C", "", "D", ""))
 
 save_function_mono(palm_plot, "palm_plots", a = 7, b = 8)
 save_function_mono(lps_plot, "lps_plots", a = 7, b = 8)

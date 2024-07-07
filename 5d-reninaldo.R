@@ -236,8 +236,8 @@ save_function_reninaldo(plot_aldo, "aldo")
 save_function_reninaldo(plot_logarr, "logarr")
 
 pl_mechanisms <- ggarrange(plot_brs, plot_sdnn, plot_dpdt,
-                           plot_logrenin, plot_aldo,
-                           labels = c("A", "B", "C", "D", "E"), 
+                           plot_logrenin, plot_aldo, plot_fena, 
+                           labels = c("A", "B", "C", "D", "E", "F"), 
                            nrow = 3,
                            ncol = 2,
                            common.legend = TRUE,

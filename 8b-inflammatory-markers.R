@@ -169,13 +169,13 @@ ifng_lm <- df_elisa %>% linearmixed_elisa(IFNg)
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 20),
                   fill = "#CDCDCD", alpha = 0.3) +
         geom_line(data = df_elisa, aes(x = weeks, y = IL6,
-                                      color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+                        color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
         geom_point(data = df_elisa, aes(x = weeks, y = IL6,
-                                       color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
+                        color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
         geom_line(data = df_means, aes(x = weeks, y = IL6_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+                        color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
         geom_point(data = df_means, aes(x = weeks, y = IL6_mean, 
-                                        color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
+                        color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
         geom_errorbar(data = df_means,
                       aes(ymin = IL6_mean - (IL6_sd/sqrt(IL6_n)),
                           ymax = IL6_mean + (IL6_sd/sqrt(IL6_n)),
@@ -184,8 +184,7 @@ ifng_lm <- df_elisa %>% linearmixed_elisa(IFNg)
         stat_pvalue_manual(il6_lm, y.position = 1, label = "p.signif",
                            tip.length = 0, bracket.shorten = 0.1, size = 5, hide.ns = TRUE) +
         scale_color_jama() +
-        # scale_y_continuous(limits = c(0,9), breaks = seq(from = 0, to = 9, by = 1)) +
-        scale_y_log10(limits = c(1,20)) +
+        scale_y_log10(limits = c(0.01,20)) +
         theme_Publication() +
         labs(x = "Weeks", y = "IL6 (pg/ml)", title = "Serum IL6", color = ""))
 
@@ -193,13 +192,13 @@ ifng_lm <- df_elisa %>% linearmixed_elisa(IFNg)
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 0, ymax = 1.7),
                   fill = "#CDCDCD", alpha = 0.3) +
         geom_line(data = df_elisa, aes(x = weeks, y = IFNg,
-                                       color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
+                        color = Treatment_group, group = ID), alpha = 0.2, linewidth = 0.5) +
         geom_point(data = df_elisa, aes(x = weeks, y = IFNg,
-                                        color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
+                        color = Treatment_group, group = Treatment_group), alpha = 0.2, size = 0.8) +
         geom_line(data = df_means, aes(x = weeks, y = IFNg_mean, 
-                                       color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
+                        color = Treatment_group, group = Treatment_group), alpha = 1, linewidth = 0.8) +
         geom_point(data = df_means, aes(x = weeks, y = IFNg_mean, 
-                                        color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
+                        color = Treatment_group, group = Treatment_group), alpha = 1, size = 1.3) +
         geom_errorbar(data = df_means,
                       aes(ymin = IFNg_mean - (IFNg_sd/sqrt(IFNg_n)),
                           ymax = IFNg_mean + (IFNg_sd/sqrt(IFNg_n)),
@@ -280,4 +279,5 @@ pl_elisa <- ggarrange(plot_il6, plot_ifng, plot_calprotectin,
                       ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom")
 pl_elisa
 save_function_elisa(pl_elisa, "inflammatorymarkers", a = 6, b = 6)
-
+save_function_elisa(plot_il6, "il6", a = 4, b = 4)
+save_function_elisa(plot_calprotectin, "calprotectin", a = 4, b = 4)
