@@ -42,6 +42,7 @@ The scripts shared in this repository are numbered, and are discussed below in t
 - Linear mixed models for separate ASVs in `7d-lmm-asvs.R` (plot can be found in Supplements)
 
 8. Monocyte and inflammatory markers analyses:
-- Analyses of FACS data and ex vivo stimulations (ELISA data IL6 and TNFa) in script `8a-monocyte-analysis.R`
+- Analyses of monocyte FACS data and ex vivo stimulations (ELISA data IL6 and TNFa) in script `8a-monocyte-analysis.R`
 - Analyses of circulating inflammatory markers in serum (ELISA data IL6 and IFNg) in script `8b-inflammatory-markers.R`
+- Analyses of T-cell FACS data in script `8c-tcell-analysis.R`
 
