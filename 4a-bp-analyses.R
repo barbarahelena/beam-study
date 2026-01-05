@@ -195,6 +195,9 @@ df_means <- df_total %>%
     group_by(Treatment_group, weeks) %>% 
     summarise(across(contains("Mean"), list(mean = mean, sd = sd, n = length), .names = "{.col}_{.fn}"))
 
+# Save summary table with means per group
+write_csv(df_means, "results/abpm/abpm_means_per_group.csv")
+
 ## LMMs ABPM
 (totsys_lm <- df_total %>% linearmixed(Total_systolic_Mean))
 (awsys_lm <- df_total %>% linearmixed(Awake_systolic_Mean))
@@ -475,6 +478,9 @@ df_officemean <- df_office %>%
     group_by(Treatment_group, weeks) %>% 
     summarise(across(c("Systolic", "Diastolic", "Pulse"), list(mean = mean, sd = sd, n = length), 
                      .names = "{.col}_{.fn}"))
+
+# Save office BP summary table with means per group
+write_csv(df_officemean, "results/officebp/officebp_means_per_group.csv")
 
 officesys_lm <- df_office %>% linearmixed_office(Systolic)
 

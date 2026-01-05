@@ -384,6 +384,9 @@ shan_means <- df_shan %>%
     group_by(Treatment_group, weeks) %>% 
     summarise(mean = mean(shannon), sd = sd(shannon), n = length(shannon))
 
+# Save Shannon diversity means per group
+write_csv(shan_means, "results/microbiota/shannon_diversity_means_per_group.csv")
+
 (plot_shan <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 3.0, ymax = 5.0),
                   fill = "#CDCDCD", alpha = 0.3) +
@@ -425,6 +428,9 @@ div_lmm <- linearmixed_div(dffai, PD)
 faith_means <- dffai %>% 
     group_by(Treatment_group, weeks) %>% 
     summarise(mean = mean(PD), sd = sd(PD), n = length(PD))
+
+# Save Faith's phylogenetic diversity means per group
+write_csv(faith_means, "results/microbiota/faiths_pd_means_per_group.csv")
 
 (plot_faith <- ggplot() +
         geom_rect(aes(xmin = 0, xmax = 4, ymin = 10, ymax = 35),

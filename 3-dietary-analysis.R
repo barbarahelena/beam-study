@@ -113,6 +113,9 @@ df_means <- df_diet %>%
                           n = ~length(.x)
                      ), .names = "{.col}_{.fn}"))
 
+# Save dietary data summary table with means per group
+write_csv(df_means, "results/diet/dietary_means_per_group.csv")
+
 #### Dietary data plots with LMMs ####
 energy_lm <- df_diet %>% linearmixed_diet(Energy)
 fat_lm <- df_diet %>% linearmixed_diet(Fat)

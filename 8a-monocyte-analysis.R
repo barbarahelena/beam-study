@@ -244,6 +244,9 @@ df_palm_mean <- df_palm %>%   group_by(Treatment_group, weeks) %>%
                           n = ~length(.x)
                      ), .names = "{.col}_{.fn}"))
 
+# Save palmitate stimulation monocyte response means per group
+write_csv(df_palm_mean, "results/monocytes/palmitate_monocyte_means_per_group.csv")
+
 df_lps <- df_elisa_prop2 %>% filter(stim == "LPS 1ng/ml" & trained == 0)
 df_lps_mean <- df_lps %>% 
     group_by(Treatment_group, weeks) %>% 
@@ -253,6 +256,9 @@ df_lps_mean <- df_lps %>%
                           n = ~length(.x)
                      ), .names = "{.col}_{.fn}"))
 
+# Save LPS stimulation monocyte response means per group
+write_csv(df_lps_mean, "results/monocytes/lps_monocyte_means_per_group.csv")
+
 df_palm_trained <- df_elisa_prop2 %>% filter(stim == "Palmitate 100uM" & trained == 1) 
 df_palm_trained_mean <- df_palm_trained  %>% group_by(Treatment_group, weeks) %>% 
     summarise(across(c("il6_fc_train", "tnfa_fc_train"), 
@@ -261,6 +267,9 @@ df_palm_trained_mean <- df_palm_trained  %>% group_by(Treatment_group, weeks) %>
                           n = ~length(.x)
                      ), .names = "{.col}_{.fn}"))
 
+# Save Palm trained monocyte response means per group
+write_csv(df_palm_trained_mean, "results/monocytes/palm_trained_monocyte_means_per_group.csv")
+
 df_lps_trained <- df_elisa_prop2 %>% filter(stim == "LPS 1ng/ml" & trained == 1) 
 df_lps_trained_mean <- df_lps_trained %>% group_by(Treatment_group, weeks) %>% 
     summarise(across(c("il6_fc_train", "tnfa_fc_train"), 
@@ -268,6 +277,9 @@ df_lps_trained_mean <- df_lps_trained %>% group_by(Treatment_group, weeks) %>%
                           sd = ~sd(.x, na.rm = TRUE),
                           n = ~length(.x)
                      ), .names = "{.col}_{.fn}"))
+
+# Save LPS trained monocyte response means per group
+write_csv(df_lps_trained_mean, "results/monocytes/lps_trained_monocyte_means_per_group.csv")
 
 
 #### ELISA LMMs ####
@@ -397,6 +409,9 @@ df_means_mono <- df_mono %>%
                           sd = ~sd(.x, na.rm = TRUE),
                           n = ~length(.x)
                      ), .names = "{.col}_{.fn}"))
+
+# Save monocyte subset counts means per group
+write_csv(df_means_mono, "results/monocytes/monocyte_subsets_means_per_group.csv")
 
 
 #### Monocyte LMMs ####

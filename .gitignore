@@ -8,4 +8,6 @@ results/
 .DS_Store
 archive/
 data/
-paper/
+paper/# pixi environments
+.pixi/*
+!.pixi/config.toml

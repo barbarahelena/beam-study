@@ -147,6 +147,9 @@ df_means <- df_scfa_compl %>%
                  ),
                  .names = "{.col}_{.fn}"))
 
+# Save SCFA summary table with means per group
+write_csv(df_means, "results/fecalscfa/fecalscfa_means_per_group.csv")
+
 #### SCFA plots with LMMs ####
 dw_aa <- linearmixed_scfa_cov(df_scfa_compl, DW_AA_umolg)
 dw_ba <- linearmixed_scfa_cov(df_scfa_compl, DW_BA_umolg)

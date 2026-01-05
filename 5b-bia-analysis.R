@@ -134,6 +134,9 @@ df_means <- df_bia %>%
                           n = ~length(.x)
                      ), .names = "{.col}_{.fn}"))
 
+# Save BIA summary table with means per group
+write_csv(df_means, "results/bia/bia_means_per_group.csv")
+
 #### BIA plots with LMMs ####
 weight_lm <- df_bia %>% linearmixed_bia(Weight)
 bmi_lm <- df_bia %>% linearmixed_bia(BMI)

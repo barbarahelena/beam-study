@@ -117,6 +117,9 @@ df_means <- df_serotonin %>%
                  ),
                  .names = "{.col}_{.fn}"))
 
+# Save serotonin summary table with means per group
+write_csv(df_means, "results/serotonin/serotonin_means_per_group.csv")
+
 #### Serotonin plot with LMM ####
 serotonin_lm <- df_serotonin %>% linearmixed_stn(serotonin_uM) %>% filter(p_signif != "")
 

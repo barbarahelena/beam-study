@@ -158,6 +158,8 @@ df_means <- df_elisa %>%
                           n = ~length(.x)
                      ), .names = "{.col}_{.fn}"))
 
+# Save inflammatory markers ELISA summary table with means per group
+write_csv(df_means, "results/elisa/cytokines_means_per_group.csv")
 
 #### ELISA plots with LMMs ####
 il6_lm <- df_elisa %>% linearmixed_elisa(IL6)
@@ -242,6 +244,9 @@ df_means <- df_calprotectin %>%
                           n = ~length(.x)
                      ),
                      .names = "{.col}_{.fn}"))
+
+# Save calprotectin summary table with means per group
+write_csv(df_means, "results/calprotectin/calprotectin_means_per_group.csv")
 
 #### Calprotectin plot with LMM ####
 log_cal <- df_calprotectin %>% linearmixed_cal(log_cal)

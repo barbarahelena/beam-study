@@ -126,6 +126,9 @@ df_means <- df_ra %>%
                           n = ~length(.x)
                      ), .names = "{.col}_{.fn}"))
 
+# Save renin-aldo summary table with means per group
+write_csv(df_means, "results/reninaldo/reninaldo_means_per_group.csv")
+
 #### Renin and aldosterone plots with LMMs ####
 renin_lm <- df_ra %>% linearmixed_reninaldo(logRenin)
 aldo_lm <- df_ra %>% linearmixed_reninaldo(Aldosterone)

@@ -148,6 +148,9 @@ urine_means <- urine_total %>%
                      list(mean = mean, sd = sd), .names = "{.col}_{.fn}"))
 urine_means
 
+# Save fractional excretion summary table with means per group
+write_csv(urine_means, "results/frac_excretion/fracexcretion_means_per_group.csv")
+
 #### LMM and plot ####
 fena_lmm <- linearmixed_excr(urine_total, FENa)
 

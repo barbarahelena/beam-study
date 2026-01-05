@@ -137,6 +137,9 @@ nexfin_means <- nexfin_total %>%
                           ),
                      .names = "{.col}_{.fn}"))
 
+# Save nexfin summary table with means per group
+write_csv(nexfin_means, "results/nexfin/nexfin_means_per_group.csv")
+
 map_lmm <- linearmixed_nexfin(nexfin_total, MAP)
 co_lmm <- linearmixed_nexfin(nexfin_total, CO)
 dpdt_lmm <- linearmixed_nexfin(nexfin_total, dPdt)

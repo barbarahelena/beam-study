@@ -157,6 +157,9 @@ df_tcell_mean <- df_tcell %>% group_by(Treatment_group, weeks) %>%
                           n = ~length(.x)
                      ), .names = "{.col}_{.fn}"))
 
+# Save T cell counts summary table with means per group
+write_csv(df_tcell_mean, "results/tcells/tcells_means_per_group.csv")
+
 ## Varnames
 # [1] "Singlets Count"                               "population Count"                            
 # [3] "CD3 Count"                                    "CD4 Count"                                   
